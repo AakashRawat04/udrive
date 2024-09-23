@@ -4,7 +4,9 @@
     "dev": "./node_modules/.bin/dotenvx run -- tsx watch backend/server.ts",
     "build": "esbuild backend/server.ts --bundle --minify --platform=node --outfile=dist/server.js",
     "start": "./node_modules/.bin/dotenvx run -- node dist/server.js",
-    "prebuild": "rm -rf dist"
+    "prebuild": "rm -rf dist",
+    "generate": "drizzle-kit generate",
+    "migrate": "tsx backend/migrate.ts"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.14.1",
