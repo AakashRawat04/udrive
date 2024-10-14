@@ -1,11 +1,11 @@
 meta {
-  name: login
+  name: register
   type: http
   seq: 3
 }
 
 post {
-  url: {{BASE_URL}}/api/auth/login
+  url: {{BASE_URL}}/api/auth/register
   body: json
   auth: bearer
 }
@@ -16,6 +16,7 @@ auth:bearer {
 
 body:json {
   {
+    "name": "ash",
     "email": "ash@gmail.com",
     "password": "ash"
   }

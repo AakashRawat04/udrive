@@ -9,7 +9,7 @@ export const db = drizzle(
 	postgres({
 		host: process.env.HOST!,
 		user: dbCred.username,
-		password: encodeURIComponent(dbCred.password),
+		password: dbCred.password,
 		port: Number(process.env.PORT!),
 		database: process.env.DATABASE!,
 	})

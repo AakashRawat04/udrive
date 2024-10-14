@@ -20,6 +20,9 @@ dependencies:
   drizzle-orm:
     specifier: ^0.33.0
     version: 0.33.0(postgres@3.4.4)
+  drizzle-valibot:
+    specifier: ^0.2.0
+    version: 0.2.0(drizzle-orm@0.33.0)(valibot@0.42.0)
   hono:
     specifier: ^4.6.2
     version: 4.6.2
@@ -1752,6 +1755,16 @@ packages:
         optional: true
     dependencies:
       postgres: 3.4.4
+    dev: false
+
+  /drizzle-valibot@0.2.0(drizzle-orm@0.33.0)(valibot@0.42.0):
+    resolution: {integrity: sha512-+JTZZN52fFv20kGTXI1KGpysdCiedaTDpWQ6lqnxX2DD5U5tJfGPB2ROjHFjbLzK4XiH98MOhKZf174orBQAew==}
+    peerDependencies:
+      drizzle-orm: '>=0.23.13'
+      valibot: '>=0.20'
+    dependencies:
+      drizzle-orm: 0.33.0(postgres@3.4.4)
+      valibot: 0.42.0
     dev: false
 
   /eciesjs@0.4.8:
