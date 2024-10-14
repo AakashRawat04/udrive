@@ -1,11 +1,11 @@
 import { integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { car } from "./car";
+import { carDbSchema } from "./car";
 import { user } from "./user";
 
 export const rating = pgTable("rating", {
 	id: uuid("id").notNull().primaryKey().defaultRandom(),
 	car: uuid("car")
-		.references(() => car.id)
+		.references(() => carDbSchema.id)
 		.notNull(),
 	user: uuid("user")
 		.references(() => user.id)

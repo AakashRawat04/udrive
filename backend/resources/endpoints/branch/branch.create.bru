@@ -1,0 +1,19 @@
+meta {
+  name: branch.create
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{BASE_URL}}/api/branch.create
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "test branch",
+    "address": "hellow",
+    "admin": "48b034b2-e728-4d8e-9c79-cbbee18416fd"
+  }
+}

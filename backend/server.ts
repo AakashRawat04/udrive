@@ -3,9 +3,13 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { auth } from "./routes/auth/auth";
+import { branch } from "./routes/branch/branch";
 import { events } from "./routes/events/event";
 
-const api = new Hono().route("/auth", auth).route("/events", events);
+const api = new Hono()
+	.route("/auth", auth)
+	.route("/events", events)
+	.route("/", branch);
 
 const app = new Hono()
 	.use(cors())

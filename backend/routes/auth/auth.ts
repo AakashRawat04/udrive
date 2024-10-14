@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { jwt, sign } from "hono/jwt";
 import { loginSchema, registerSchema } from "../../schema/auth";
 import { user } from "../../schema/user";
+import { userTypes } from "../../utils/constants";
 import { db } from "../../utils/db";
 
 export const auth = new Hono();
