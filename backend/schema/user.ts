@@ -1,5 +1,6 @@
 import { pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
+// role: user | admin | superadmin
 export const user = pgTable("user", {
 	id: uuid("id").notNull().primaryKey().defaultRandom(),
 	name: varchar("name", { length: 255 }).notNull(),
