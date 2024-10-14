@@ -15,7 +15,7 @@ export const Footer = () => {
         </div>
         <div className="text-center md:text-right">
           <BrandLogo />
-          <p className="text-sm mt-2">© 2021 Udrive. All rights reserved.</p>
+          <p className="text-sm mt-2">© {new Date().getFullYear()} uDrive. All rights reserved.</p>
         </div>
       </div>
   </footer>
