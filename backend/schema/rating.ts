@@ -1,7 +1,7 @@
 import { integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import * as v from "valibot";
 import { carDbSchema } from "./car";
-import { user } from "./user";
+import { userDbSchema } from "./user";
 
 export const ratingDbSchema = pgTable("rating", {
 	id: uuid("id").notNull().primaryKey().defaultRandom(),
@@ -9,7 +9,7 @@ export const ratingDbSchema = pgTable("rating", {
 		.references(() => carDbSchema.id)
 		.notNull(),
 	user: uuid("user")
-		.references(() => user.id)
+		.references(() => userDbSchema.id)
 		.notNull(),
 	rating: integer("rating").notNull(),
 	comment: text("comment").notNull(),

@@ -3,3 +3,9 @@ export const userTypes = {
 	ADMIN: "admin",
 	USER: "user",
 };
+
+export const carRequestStatus = {
+	PENDING: "pending",
+	APPROVED: "approved",
+	REJECTED: "rejected",
+};

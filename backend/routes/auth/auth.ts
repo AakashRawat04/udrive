@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { jwt, sign } from "hono/jwt";
 import { loginSchema, registerSchema } from "../../schema/auth";
-import { user } from "../../schema/user";
+import { userDbSchema } from "../../schema/user";
 import { userTypes } from "../../utils/constants";
 import { db } from "../../utils/db";
 
@@ -14,8 +14,8 @@ auth.post("/login", vValidator("json", loginSchema), async (c) => {
 
 	const response = await db
 		.select()
-		.from(user)
-		.where(eq(user.email, body.email));
+		.from(userDbSchema)
+		.where(eq(userDbSchema.email, body.email));
 
 	console.log(response);
 	if (response.length === 0) {
@@ -43,7 +43,7 @@ auth.post("/register", vValidator("json", registerSchema), async (c) => {
 	try {
 		const body = c.req.valid("json");
 
-		const response = await db.insert(user).values({
+		const response = await db.insert(userDbSchema).values({
 			name: body.name,
 			email: body.email,
 			password: body.password,
@@ -76,7 +76,7 @@ auth.post(
 				return c.json({ error: "Unauthorized" });
 			}
 
-			const response = await db.insert(user).values({
+			const response = await db.insert(userDbSchema).values({
 				name: body.name,
 				email: body.email,
 				password: body.password,

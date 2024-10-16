@@ -1,13 +1,13 @@
 import { pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import * as v from "valibot";
-import { user } from "./user";
+import { userDbSchema } from "./user";
 
 export const branchDbSchema = pgTable("branch", {
 	id: uuid("id").notNull().primaryKey().defaultRandom(),
 	name: varchar("name", { length: 255 }).notNull(),
 	address: text("address").notNull(),
 	admin: uuid("admin")
-		.references(() => user.id)
+		.references(() => userDbSchema.id)
 		.notNull(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
