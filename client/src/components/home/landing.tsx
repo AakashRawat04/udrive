@@ -23,7 +23,7 @@ export const LandingPage = () => {
         </Button>
       </div>
       <div id="booknow" className="bg-black/90 md:bg-transparent mt-16 pb-16 md:mt-0 p-4">
-        <h2 className="text-3xl font-bold text-white text-center md:hidden my-10">
+        <h2 className="text-3xl font-bold text-white text-center md:hidden my-16">
           Book your car now!
         </h2>
         <SearchForm />

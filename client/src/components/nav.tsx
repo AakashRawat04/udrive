@@ -45,18 +45,20 @@ export function Nav() {
       </nav>
       <div className="flex w-max items-center gap-4 ml-auto md:gap-2 lg:gap-4">
         <nav className="hidden md:flex w-max items-center gap-4 ml-auto md:gap-2 lg:gap-4 mr-2">
-          <a
-            href="#contactus"
+          <Link
+            to="/"
+            hash="contactus"
             className="text-foreground transition-colors hover:text-foreground"
           >
             Contact
-          </a>
-          <a
-            href="#about"
+          </Link>
+          <Link
+            to="/"
+            hash="about"
             className="text-foreground transition-colors hover:text-foreground"
           >
             About Us
-          </a>
+          </Link>
         </nav>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -68,9 +70,12 @@ export function Nav() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Link to="/settings/profile">Profile</Link>
-            </DropdownMenuItem>
+            <Link to="/settings/profile">
+              <DropdownMenuItem>Profile</DropdownMenuItem>
+            </Link>
+            <Link to="/admin/dashboard">
+              <DropdownMenuItem>Admin</DropdownMenuItem>
+            </Link>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Logout</DropdownMenuItem>
           </DropdownMenuContent>
