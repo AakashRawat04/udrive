@@ -21,12 +21,12 @@ export const WhyChooseUdrive = () => {
   ];
 
   return (
-    <div className="container mx-auto px-4 h-screen pt-24 relative" id="about">
+    <div className="h-screen pt-24 relative w-full overflow-hidden" id="about">
       <h2 className="text-3xl font-bold text-center mb-4">Why choose Udrive?</h2>
       <p className="text-center text-lg mb-8">
         Renting a luxury car has never been easier. Our streamlined process makes it simple for you to book and confirm your vehicle of choice online
       </p>
-      <div className="grid grid-cols-1 w-full md:max-w-2xl md:ml-20 md:mt-20 gap-6 pt-6">
+      <div className="grid grid-cols-1 w-full md:max-w-2xl md:ml-48 md:mt-40 gap-6 pt-6">
         {cardData.map((card, index) => (
           <Card key={index}>
             <CardContent className="flex items-start p-6">
@@ -43,7 +43,7 @@ export const WhyChooseUdrive = () => {
           </Card>
         ))}
       </div>
-      <img src="/why-choose-u-drive.png" alt="why-choose-u-drive" className="absolute -right-40 -bottom-0 -z-50 hidden md:block" />
+      <img src="/why-choose-u-drive.png" alt="why-choose-u-drive" className="absolute -right-10 -bottom-10 -z-50 hidden md:block" />
     </div>
   );
 };

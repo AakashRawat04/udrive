@@ -11,14 +11,44 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as SearchImport } from './routes/search'
+import { Route as SplatImport } from './routes/$'
 import { Route as IndexImport } from './routes/index'
+import { Route as UserRegisterImport } from './routes/user/register'
+import { Route as UserLoginImport } from './routes/user/login'
 import { Route as SettingsProfileImport } from './routes/settings/profile'
 import { Route as CarCarIdImport } from './routes/car/$carId'
+import { Route as AdminLoginImport } from './routes/admin/login'
+import { Route as AdminDashboardImport } from './routes/admin/dashboard'
+import { Route as TrackCarCarIdImport } from './routes/track/car/$carId'
+import { Route as AdminManageCarsImport } from './routes/admin/manage/cars'
+import { Route as AdminManageBranchesImport } from './routes/admin/manage/branches'
+import { Route as AdminManageAdminsImport } from './routes/admin/manage/admins'
 
 // Create/Update Routes
 
+const SearchRoute = SearchImport.update({
+  path: '/search',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const SplatRoute = SplatImport.update({
+  path: '/$',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const IndexRoute = IndexImport.update({
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const UserRegisterRoute = UserRegisterImport.update({
+  path: '/user/register',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const UserLoginRoute = UserLoginImport.update({
+  path: '/user/login',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -32,6 +62,36 @@ const CarCarIdRoute = CarCarIdImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const AdminLoginRoute = AdminLoginImport.update({
+  path: '/admin/login',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AdminDashboardRoute = AdminDashboardImport.update({
+  path: '/admin/dashboard',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const TrackCarCarIdRoute = TrackCarCarIdImport.update({
+  path: '/track/car/$carId',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AdminManageCarsRoute = AdminManageCarsImport.update({
+  path: '/admin/manage/cars',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AdminManageBranchesRoute = AdminManageBranchesImport.update({
+  path: '/admin/manage/branches',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AdminManageAdminsRoute = AdminManageAdminsImport.update({
+  path: '/admin/manage/admins',
+  getParentRoute: () => rootRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -41,6 +101,34 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatImport
+      parentRoute: typeof rootRoute
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchImport
+      parentRoute: typeof rootRoute
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardImport
+      parentRoute: typeof rootRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginImport
       parentRoute: typeof rootRoute
     }
     '/car/$carId': {
@@ -57,6 +145,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsProfileImport
       parentRoute: typeof rootRoute
     }
+    '/user/login': {
+      id: '/user/login'
+      path: '/user/login'
+      fullPath: '/user/login'
+      preLoaderRoute: typeof UserLoginImport
+      parentRoute: typeof rootRoute
+    }
+    '/user/register': {
+      id: '/user/register'
+      path: '/user/register'
+      fullPath: '/user/register'
+      preLoaderRoute: typeof UserRegisterImport
+      parentRoute: typeof rootRoute
+    }
+    '/admin/manage/admins': {
+      id: '/admin/manage/admins'
+      path: '/admin/manage/admins'
+      fullPath: '/admin/manage/admins'
+      preLoaderRoute: typeof AdminManageAdminsImport
+      parentRoute: typeof rootRoute
+    }
+    '/admin/manage/branches': {
+      id: '/admin/manage/branches'
+      path: '/admin/manage/branches'
+      fullPath: '/admin/manage/branches'
+      preLoaderRoute: typeof AdminManageBranchesImport
+      parentRoute: typeof rootRoute
+    }
+    '/admin/manage/cars': {
+      id: '/admin/manage/cars'
+      path: '/admin/manage/cars'
+      fullPath: '/admin/manage/cars'
+      preLoaderRoute: typeof AdminManageCarsImport
+      parentRoute: typeof rootRoute
+    }
+    '/track/car/$carId': {
+      id: '/track/car/$carId'
+      path: '/track/car/$carId'
+      fullPath: '/track/car/$carId'
+      preLoaderRoute: typeof TrackCarCarIdImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -64,42 +194,132 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/search': typeof SearchRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/login': typeof AdminLoginRoute
   '/car/$carId': typeof CarCarIdRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/user/login': typeof UserLoginRoute
+  '/user/register': typeof UserRegisterRoute
+  '/admin/manage/admins': typeof AdminManageAdminsRoute
+  '/admin/manage/branches': typeof AdminManageBranchesRoute
+  '/admin/manage/cars': typeof AdminManageCarsRoute
+  '/track/car/$carId': typeof TrackCarCarIdRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/search': typeof SearchRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/login': typeof AdminLoginRoute
   '/car/$carId': typeof CarCarIdRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/user/login': typeof UserLoginRoute
+  '/user/register': typeof UserRegisterRoute
+  '/admin/manage/admins': typeof AdminManageAdminsRoute
+  '/admin/manage/branches': typeof AdminManageBranchesRoute
+  '/admin/manage/cars': typeof AdminManageCarsRoute
+  '/track/car/$carId': typeof TrackCarCarIdRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/search': typeof SearchRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/login': typeof AdminLoginRoute
   '/car/$carId': typeof CarCarIdRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/user/login': typeof UserLoginRoute
+  '/user/register': typeof UserRegisterRoute
+  '/admin/manage/admins': typeof AdminManageAdminsRoute
+  '/admin/manage/branches': typeof AdminManageBranchesRoute
+  '/admin/manage/cars': typeof AdminManageCarsRoute
+  '/track/car/$carId': typeof TrackCarCarIdRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/car/$carId' | '/settings/profile'
+  fullPaths:
+    | '/'
+    | '/$'
+    | '/search'
+    | '/admin/dashboard'
+    | '/admin/login'
+    | '/car/$carId'
+    | '/settings/profile'
+    | '/user/login'
+    | '/user/register'
+    | '/admin/manage/admins'
+    | '/admin/manage/branches'
+    | '/admin/manage/cars'
+    | '/track/car/$carId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/car/$carId' | '/settings/profile'
-  id: '__root__' | '/' | '/car/$carId' | '/settings/profile'
+  to:
+    | '/'
+    | '/$'
+    | '/search'
+    | '/admin/dashboard'
+    | '/admin/login'
+    | '/car/$carId'
+    | '/settings/profile'
+    | '/user/login'
+    | '/user/register'
+    | '/admin/manage/admins'
+    | '/admin/manage/branches'
+    | '/admin/manage/cars'
+    | '/track/car/$carId'
+  id:
+    | '__root__'
+    | '/'
+    | '/$'
+    | '/search'
+    | '/admin/dashboard'
+    | '/admin/login'
+    | '/car/$carId'
+    | '/settings/profile'
+    | '/user/login'
+    | '/user/register'
+    | '/admin/manage/admins'
+    | '/admin/manage/branches'
+    | '/admin/manage/cars'
+    | '/track/car/$carId'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
+  SearchRoute: typeof SearchRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminLoginRoute: typeof AdminLoginRoute
   CarCarIdRoute: typeof CarCarIdRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
+  UserLoginRoute: typeof UserLoginRoute
+  UserRegisterRoute: typeof UserRegisterRoute
+  AdminManageAdminsRoute: typeof AdminManageAdminsRoute
+  AdminManageBranchesRoute: typeof AdminManageBranchesRoute
+  AdminManageCarsRoute: typeof AdminManageCarsRoute
+  TrackCarCarIdRoute: typeof TrackCarCarIdRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
+  SearchRoute: SearchRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminLoginRoute: AdminLoginRoute,
   CarCarIdRoute: CarCarIdRoute,
   SettingsProfileRoute: SettingsProfileRoute,
+  UserLoginRoute: UserLoginRoute,
+  UserRegisterRoute: UserRegisterRoute,
+  AdminManageAdminsRoute: AdminManageAdminsRoute,
+  AdminManageBranchesRoute: AdminManageBranchesRoute,
+  AdminManageCarsRoute: AdminManageCarsRoute,
+  TrackCarCarIdRoute: TrackCarCarIdRoute,
 }
 
 export const routeTree = rootRoute
@@ -115,18 +335,58 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/$",
+        "/search",
+        "/admin/dashboard",
+        "/admin/login",
         "/car/$carId",
-        "/settings/profile"
+        "/settings/profile",
+        "/user/login",
+        "/user/register",
+        "/admin/manage/admins",
+        "/admin/manage/branches",
+        "/admin/manage/cars",
+        "/track/car/$carId"
       ]
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/$": {
+      "filePath": "$.tsx"
+    },
+    "/search": {
+      "filePath": "search.tsx"
+    },
+    "/admin/dashboard": {
+      "filePath": "admin/dashboard.tsx"
+    },
+    "/admin/login": {
+      "filePath": "admin/login.tsx"
     },
     "/car/$carId": {
       "filePath": "car/$carId.tsx"
     },
     "/settings/profile": {
       "filePath": "settings/profile.tsx"
+    },
+    "/user/login": {
+      "filePath": "user/login.tsx"
+    },
+    "/user/register": {
+      "filePath": "user/register.tsx"
+    },
+    "/admin/manage/admins": {
+      "filePath": "admin/manage/admins.tsx"
+    },
+    "/admin/manage/branches": {
+      "filePath": "admin/manage/branches.tsx"
+    },
+    "/admin/manage/cars": {
+      "filePath": "admin/manage/cars.tsx"
+    },
+    "/track/car/$carId": {
+      "filePath": "track/car/$carId.tsx"
     }
   }
 }
