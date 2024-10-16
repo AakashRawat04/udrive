@@ -1,4 +1,11 @@
-import { pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+	numeric,
+	pgEnum,
+	pgTable,
+	timestamp,
+	uuid,
+	varchar,
+} from "drizzle-orm/pg-core";
 import * as v from "valibot";
 import { carRequestStatus } from "../utils/constants";
 import { branchDbSchema } from "./branch";
@@ -41,6 +48,21 @@ export const carRequestDbSchema = pgTable("car_request", {
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const carJourneyDbSchema = pgTable("car_journey", {
+	id: uuid("id").notNull().primaryKey().defaultRandom(),
+	car: uuid("car")
+		.references(() => carDbSchema.id)
+		.notNull(),
+	user: uuid("user")
+		.references(() => userDbSchema.id)
+		.notNull(),
+	startTime: timestamp("start_time").notNull(),
+	endTime: timestamp("end_time"),
+	finalPrice: numeric("final_price"),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const carSchema = v.object({
 	brand: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
 	model: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
@@ -73,4 +95,24 @@ export const updateCarRequestSchema = v.object({
 	id: v.pipe(v.string(), v.uuid()),
 	car: v.pipe(v.string(), v.uuid()),
 	status: v.pipe(v.string(), v.picklist(Object.values(carRequestStatus))),
+});
+
+export const startCarJourneySchema = v.object({
+	car: v.pipe(v.string(), v.uuid()),
+	user: v.pipe(v.string(), v.uuid()),
+	startTime: v.date(),
+});
+
+export const endCarJourneySchema = v.object({
+	id: v.pipe(v.string(), v.uuid()),
+	endTime: v.date(),
+});
+
+export const updateCarJourneySchema = v.object({
+	id: v.pipe(v.string(), v.uuid()),
+	car: v.pipe(v.string(), v.uuid()),
+	user: v.pipe(v.string(), v.uuid()),
+	startTime: v.optional(v.date()),
+	endTime: v.optional(v.date()),
+	finalPrice: v.optional(v.string()),
 });
