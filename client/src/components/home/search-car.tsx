@@ -19,6 +19,7 @@ import { format } from "date-fns/format";
 import { Calendar as CalendarIcon, CheckIcon, MapPinIcon } from "lucide-react";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { Label } from "@/components/ui/label";
+import { useParams, useSearch } from "@tanstack/react-router";
 
 const locations = [
   { value: "new-york", label: "New York" },
@@ -30,6 +31,7 @@ export const SearchForm: React.FC = () => {
   const [location, setLocation] = useState("");
   const [pickupDate, setPickupDate] = useState<Date>();
   const [dropDate, setDropDate] = useState<Date>();
+  const today = new Date();
 
   return (
     <form className="flex flex-col md:flex-row justify-center items-end gap-6 md:gap-4 w-full max-w-7xl mx-auto md:bg-white/90 md:py-6 md:pt-8 px-6 rounded-xl">
@@ -84,62 +86,75 @@ export const SearchForm: React.FC = () => {
         </Popover>
       </div>
       <div className="w-full flex flex-col gap-2">
-      <Label htmlFor="pickupDate" className="text-muted-foreground font-normal">
-        Pick up date
-      </Label>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn(
-              "w-full max-w-sm justify-start text-left font-normal px-3 py-5 rounded-lg",
-              !pickupDate && "text-muted-foreground"
-            )}
-          >
-            {/* @ts-ignore */}
-            {pickupDate ? format(pickupDate, "PPP") : <span>Pick up date</span>}
-            <CalendarIcon className="ml-2 h-4 w-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={pickupDate}
-            onSelect={setPickupDate}
-            initialFocus
-          />
-        </PopoverContent>
-      </Popover>
+        <Label
+          htmlFor="pickupDate"
+          className="text-muted-foreground font-normal"
+        >
+          Pick up date
+        </Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full max-w-sm justify-start text-left font-normal px-3 py-5 rounded-lg",
+                !pickupDate && "text-muted-foreground"
+              )}
+            >
+              {pickupDate ? (
+                // @ts-ignore
+                format(pickupDate, "PPP")
+              ) : (
+                <span>Pick up date</span>
+              )}
+              <CalendarIcon className="ml-auto h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={pickupDate}
+              onSelect={setPickupDate}
+              fromDate={today}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
       </div>
       <div className="w-full flex flex-col gap-2">
-      <Label htmlFor="dropDate" className="text-muted-foreground font-normal">
-        Drop off date
-      </Label>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn(
-              "w-full max-w-sm justify-start text-left font-normal px-3 py-5 rounded-lg",
-              !dropDate && "text-muted-foreground"
-            )}
-          >
-            {/* @ts-ignore */}
-            {dropDate ? format(dropDate, "PPP") : <span>Drop off date</span>}
-            <CalendarIcon className="ml-2 h-4 w-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={dropDate}
-            onSelect={setDropDate}
-            initialFocus
-          />
-        </PopoverContent>
-      </Popover>
+        <Label htmlFor="dropDate" className="text-muted-foreground font-normal">
+          Drop off date
+        </Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full max-w-sm justify-start text-left font-normal px-3 py-5 rounded-lg",
+                !dropDate && "text-muted-foreground"
+              )}
+            >
+              {/* @ts-ignore */}
+              {dropDate ? format(dropDate, "PPP") : <span>Drop off date</span>}
+              <CalendarIcon className="ml-auto h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dropDate}
+              onSelect={setDropDate}
+              fromDate={today}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
       </div>
-      <Button type="submit" disabled className="w-full max-w-xs px-3 py-5 rounded-lg md:bg-black md:hover:bg-black/90 text-white">
+      <Button
+        type="submit"
+        disabled
+        className="w-full max-w-xs px-3 py-5 rounded-lg md:bg-black md:hover:bg-black/90 text-white"
+      >
         Find A Vehicle
       </Button>
     </form>

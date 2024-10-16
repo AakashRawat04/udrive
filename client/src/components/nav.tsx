@@ -7,7 +7,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { SheetTrigger, SheetContent, Sheet } from "@/components/ui/sheet";
 import { Link } from "@tanstack/react-router";
 import { Menu, Search, CircleUser } from "lucide-react";
@@ -15,7 +14,7 @@ import { BrandLogo } from "./logo";
 
 export function Nav() {
   return (
-    <header className="sticky top-0 flex h-16 items-center gap-4 border-b border-b-black/10 bg-white/70 z-[1000] backdrop-blur-sm px-4 md:px-6">
+    <header className="sticky top-0 flex h-16 items-center gap-4 border-b border-b-black/10 bg-white/70 backdrop-blur-sm px-4 md:px-6 z-50">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -23,7 +22,7 @@ export function Nav() {
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="z-[1100]">
+        <SheetContent side="left">
           <nav className="grid gap-6 text-lg font-medium">
             <BrandLogo />
             <a
