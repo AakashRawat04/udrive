@@ -5,12 +5,14 @@ import { logger } from "hono/logger";
 import { auth } from "./routes/auth/auth";
 import { branch } from "./routes/branch/branch";
 import { car } from "./routes/car/car";
+import { carRequest } from "./routes/car/carRequest";
 import { rating } from "./routes/rating/rating";
 
 const api = new Hono()
 	.route("/auth", auth)
 	.route("/", branch)
 	.route("/", car)
+	.route("/", carRequest)
 	.route("/", rating);
 
 const app = new Hono()
