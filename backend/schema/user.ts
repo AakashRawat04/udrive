@@ -9,7 +9,7 @@ import {
 import { userTypes } from "../utils/constants";
 
 // role: user | admin | super_admin
-const roleEnum = pgEnum(
+export const roleEnum = pgEnum(
 	"role",
 	Object.values(userTypes) as [string, ...string[]]
 );

@@ -25,7 +25,7 @@ export const carDbSchema = pgTable("car", {
 
 // car request schema for car request table
 // multiple users can request for a car and the admin can update the status of the request to pending, approved or rejected
-const carRequestStatusEnum = pgEnum(
+export const carRequestStatusEnum = pgEnum(
 	"car_request_status",
 	Object.values(carRequestStatus) as [string, ...string[]]
 );
