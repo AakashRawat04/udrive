@@ -17,11 +17,11 @@ const api = new Hono()
 	.route("/", carJourney)
 	.route("/", rating);
 
-const app = new Hono()
+export const app = new Hono()
 	.use(cors())
 	.use(logger())
-	.get("/", (c) => {
-		return c.json({ data: "uDrive API" });
+	.get("/healthcheck", () => {
+		return new Response(null, { status: 200 });
 	})
 	.route("/api", api);
 
@@ -32,5 +32,3 @@ serve({
 	fetch: app.fetch,
 	port,
 });
-
-export type AppType = typeof app;

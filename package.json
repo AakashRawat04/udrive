@@ -9,20 +9,20 @@
     "migrate": "./node_modules/.bin/dotenvx run  -- tsx backend/migrate.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.670.0",
-    "@dotenvx/dotenvx": "^1.14.1",
-    "@hono/node-server": "^1.13.0",
-    "@hono/valibot-validator": "^0.3.0",
+    "@aws-sdk/client-secrets-manager": "^3.687.0",
+    "@dotenvx/dotenvx": "^1.23.0",
+    "@hono/node-server": "^1.13.7",
+    "@hono/valibot-validator": "^0.3.1",
     "drizzle-orm": "^0.33.0",
     "drizzle-valibot": "^0.2.0",
-    "hono": "^4.6.2",
-    "postgres": "^3.4.4",
-    "valibot": "^0.42.0"
+    "hono": "^4.6.10",
+    "postgres": "^3.4.5",
+    "valibot": "^0.42.1"
   },
   "devDependencies": {
-    "@types/node": "^20.11.17",
+    "@types/node": "^20.17.6",
     "drizzle-kit": "^0.24.2",
     "esbuild": "^0.23.1",
-    "tsx": "^4.7.1"
+    "tsx": "^4.19.2"
   }
 }
