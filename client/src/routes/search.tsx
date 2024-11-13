@@ -2,7 +2,7 @@ import { SearchForm } from '@/components/home/search-car'
 import { CarCard } from '@/components/search/car-card'
 import { Separator } from '@/components/ui/separator'
 import { car } from '@/data/car'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/search')({
   component: SearchPage,

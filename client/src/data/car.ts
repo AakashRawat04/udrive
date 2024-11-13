@@ -1,4 +1,8 @@
-export const car = {
+import { FieldTypes } from "@/components/ui/autoform";
+import { fieldConfig, ZodProvider } from "@autoform/zod";
+import { z } from "zod";
+
+export const car: Car = {
   id: "1",
   brand: "Toyota",
   model: "Corolla",
@@ -24,7 +28,69 @@ export const car = {
     lat: 43.653225,
     lng: -79.383186,
   },
-}
+};
 
-export const cars = [car]
-export type Car = typeof car
+export const carSchema = z.object({
+  id: z.string(),
+  brand: z.string(),
+  model: z.string(),
+  year: z.number().min(1900).max(new Date().getFullYear()),
+  regNo: z.string(),
+  images: z.array(z.string().url()),
+  ratePerHour: z.number(),
+  rating: z.number(),
+  mileage: z.number(),
+  fuelType: z.enum(["Petrol", "Diesel", "Electric"]),
+  transmission: z.enum(["Automatic", "Manual"]),
+  seats: z.number(),
+  topSpeed: z.number(),
+  branch: z.string(),
+  address: z.string(),
+  description: z.string(),
+  coordinates: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }),
+});
+
+export const addCarSchema = z.object({
+  brand: z.string(),
+  model: z.string(),
+  year: z.number().min(1900).max(new Date().getFullYear()),
+  regNo: z.string(),
+  images: z.array(z.string().url()),
+  ratePerHour: z.number(),
+  mileage: z.number(),
+  fuelType: z.enum(["Petrol", "Diesel", "Electric"]).superRefine(
+    fieldConfig<React.ReactNode, FieldTypes>({
+      fieldType: "string",
+    })
+  ),
+  transmission: z.enum(["Automatic", "Manual"]).superRefine(
+    fieldConfig<React.ReactNode, FieldTypes>({
+      fieldType: "string",
+    })
+  ),
+  seats: z.number(),
+  topSpeed: z.number(),
+  address: z.string(),
+  coordinates: z.object({
+    lat: z.number().superRefine(
+      fieldConfig<React.ReactNode, FieldTypes>({
+        inputProps: {
+          step: 0.000001,
+        },
+      })
+    ),
+    lng: z.number().superRefine(
+      fieldConfig<React.ReactNode, FieldTypes>({
+        inputProps: {
+          step: 0.000001,
+        },
+      })
+    ),
+  }),
+});
+
+export const carFormSchema = new ZodProvider(addCarSchema);
+export type Car = z.infer<typeof carSchema>;
