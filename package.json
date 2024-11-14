@@ -6,7 +6,8 @@
     "start": "./node_modules/.bin/dotenvx run -- tsx backend/server.ts",
     "prebuild": "rm -rf dist",
     "generate": "drizzle-kit generate",
-    "migrate": "./node_modules/.bin/dotenvx run  -- tsx backend/migrate.ts"
+    "migrate": "./node_modules/.bin/dotenvx run  -- tsx backend/migrate.ts",
+    "type:generate": "tsc && cp dist/types.d.ts client/env.d.ts && rm -rf dist"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.687.0",
@@ -23,6 +24,7 @@
     "@types/node": "^20.17.6",
     "drizzle-kit": "^0.24.2",
     "esbuild": "^0.23.1",
-    "tsx": "^4.19.2"
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
   }
 }

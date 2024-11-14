@@ -9,10 +9,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SheetTrigger, SheetContent, Sheet } from "@/components/ui/sheet";
 import { Link } from "@tanstack/react-router";
-import { Menu, Search, CircleUser } from "lucide-react";
+import { Menu, CircleUser } from "lucide-react";
 import { BrandLogo } from "./logo";
+import { useAuth } from "@/providers/AuthProvider";
 
 export function Nav() {
+  const { user, logout } = useAuth();
+
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b border-b-black/10 bg-white/70 backdrop-blur-sm px-4 md:px-6 z-50">
       <Sheet>
@@ -60,26 +63,38 @@ export function Nav() {
             About Us
           </Link>
         </nav>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="rounded-full">
-              <CircleUser className="h-5 w-5" />
-              <span className="sr-only">Toggle user menu</span>
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="icon" className="rounded-full">
+                <CircleUser className="h-5 w-5" />
+                <span className="sr-only">Toggle user menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {user.role === "user" ? (
+                <Link to="/settings/profile">
+                  <DropdownMenuItem>Profile</DropdownMenuItem>
+                </Link>
+              ) : null}
+              {user.role === "super_admin" || user.role === "admin" ? (
+                <Link to="/admin/dashboard">
+                  <DropdownMenuItem>Admin</DropdownMenuItem>
+                </Link>
+              ) : null}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Link to="/user/login">
+            <Button variant="outline" className="rounded-lg">
+              Login
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <Link to="/settings/profile">
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-            </Link>
-            <Link to="/admin/dashboard">
-              <DropdownMenuItem>Admin</DropdownMenuItem>
-            </Link>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </Link>
+        )}
       </div>
     </header>
   );

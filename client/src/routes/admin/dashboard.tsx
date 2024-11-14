@@ -5,7 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { car, carFormSchema, type Car } from "@/data/car";
 import { cn } from "@/lib/classes";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  redirect,
+  useRouter,
+} from "@tanstack/react-router";
 import { format } from "date-fns";
 import { ArrowRight, CalendarIcon, CarIcon, Loader2Icon } from "lucide-react";
 import type React from "react";
@@ -30,6 +35,7 @@ import {
   editBranchFormSchema,
   type Branch,
 } from "@/data/branch";
+import { useAuth } from "@/providers/AuthProvider";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
@@ -330,127 +336,139 @@ function OneCar({ car }: { car: Car }) {
 }
 
 function Dashboard() {
+  const router = useRouter();
+  const auth = useAuth();
+
+  if (auth.user?.role === "user") {
+    router.navigate({
+      to: "/",
+    });
+    return;
+  }
+
   return (
     <div className="flex flex-col p-6 md:px-20">
       <h1 className="text-2xl font-bold">Dashboard</h1>
       <p className="mt-1">Welcome to the dashboard!</p>
-      <div className="mt-4 grid grid-cols-2 md:grid-cols-3 max-w-lg gap-2">
-        <CustomDrawer
-          title="Manage Cars"
-          triggerComponentProps={{
-            size: "lg",
-            className:
-              "bg-blue-500 hover:bg-blue-600/90 text-white font-bold py-2 px-4 rounded-md",
-          }}
-        >
+      {auth.user?.role === "super_admin" && (
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 max-w-lg gap-2">
           <CustomDrawer
-            title="Add Car"
-            triggerTitle={
-              <>
-                <CarIcon className="mr-2" /> Add a new car
-              </>
-            }
+            title="Manage Cars"
             triggerComponentProps={{
-              variant: "outline",
+              size: "lg",
               className:
-                "w-full h-[100px] bg-accent rounded-xl flex justify-center items-center font-medium text-zinc-900 mb-4",
+                "bg-blue-500 hover:bg-blue-600/90 text-white font-bold py-2 px-4 rounded-md",
             }}
-            nested
           >
+            <CustomDrawer
+              title="Add Car"
+              triggerTitle={
+                <>
+                  <CarIcon className="mr-2" /> Add a new car
+                </>
+              }
+              triggerComponentProps={{
+                variant: "outline",
+                className:
+                  "w-full h-[100px] bg-accent rounded-xl flex justify-center items-center font-medium text-zinc-900 mb-4",
+              }}
+              nested
+            >
+              <ScrollArea>
+                <AutoForm
+                  schema={carFormSchema}
+                  onSubmit={(data) => console.log(data)}
+                  formProps={{
+                    className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
+                  }}
+                  withSubmit
+                />
+              </ScrollArea>
+            </CustomDrawer>
             <ScrollArea>
-              <AutoForm
-                schema={carFormSchema}
-                onSubmit={(data) => console.log(data)}
-                formProps={{
-                  className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
-                }}
-                withSubmit
-              />
+              <div className="flex flex-col gap-4 mb-20">
+                {[car, car, car, car].map((car) => (
+                  <OneCar key={car.id} car={car} />
+                ))}
+              </div>
             </ScrollArea>
           </CustomDrawer>
-          <ScrollArea>
-            <div className="flex flex-col gap-4 mb-20">
-              {[car, car, car, car].map((car) => (
-                <OneCar key={car.id} car={car} />
-              ))}
-            </div>
-          </ScrollArea>
-        </CustomDrawer>
-        <CustomDrawer
-          title="Manage Branches"
-          triggerComponentProps={{
-            size: "lg",
-            className:
-              "bg-green-500 hover:bg-green-600/90 text-white font-bold py-2 px-4 rounded-md",
-          }}
-        >
           <CustomDrawer
-            title="Add Branch"
-            triggerTitle="Add a new branch"
+            title="Manage Branches"
             triggerComponentProps={{
-              variant: "outline",
+              size: "lg",
               className:
-                "w-full h-[100px] bg-accent rounded-xl flex justify-center items-center font-medium text-zinc-900 mb-4",
+                "bg-green-500 hover:bg-green-600/90 text-white font-bold py-2 px-4 rounded-md",
             }}
-            nested
           >
+            <CustomDrawer
+              title="Add Branch"
+              triggerTitle="Add a new branch"
+              triggerComponentProps={{
+                variant: "outline",
+                className:
+                  "w-full h-[100px] bg-accent rounded-xl flex justify-center items-center font-medium text-zinc-900 mb-4",
+              }}
+              nested
+            >
+              <ScrollArea>
+                <AutoForm
+                  schema={addBranchFormSchema}
+                  onSubmit={(data) => console.log(data)}
+                  formProps={{
+                    className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
+                  }}
+                  withSubmit
+                />
+              </ScrollArea>
+            </CustomDrawer>
             <ScrollArea>
-              <AutoForm
-                schema={addBranchFormSchema}
-                onSubmit={(data) => console.log(data)}
-                formProps={{
-                  className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
-                }}
-                withSubmit
-              />
+              <div className="flex flex-col gap-4 mb-20">
+                {[branch, branch, branch, branch].map((branch) => (
+                  <OneBranch key={branch.id} branch={branch} />
+                ))}
+              </div>
             </ScrollArea>
           </CustomDrawer>
-          <ScrollArea>
-            <div className="flex flex-col gap-4 mb-20">
-              {[branch, branch, branch, branch].map((branch) => (
-                <OneBranch key={branch.id} branch={branch} />
-              ))}
-            </div>
-          </ScrollArea>
-        </CustomDrawer>
-        <CustomDrawer
-          title="Manage Admins"
-          triggerComponentProps={{
-            size: "lg",
-            className:
-              "bg-yellow-600 hover:bg-yellow-700/90 text-white font-bold py-2 px-4 rounded-md",
-          }}
-        >
           <CustomDrawer
-            title="Add Admin"
-            triggerTitle="Add a new admin"
+            title="Manage Admins"
             triggerComponentProps={{
-              variant: "outline",
+              size: "lg",
               className:
-                "w-full h-[100px] bg-accent rounded-xl flex justify-center items-center font-medium text-zinc-900 mb-4",
+                "bg-yellow-600 hover:bg-yellow-700/90 text-white font-bold py-2 px-4 rounded-md",
             }}
-            nested
           >
+            <CustomDrawer
+              title="Add Admin"
+              triggerTitle="Add a new admin"
+              triggerComponentProps={{
+                variant: "outline",
+                className:
+                  "w-full h-[100px] bg-accent rounded-xl flex justify-center items-center font-medium text-zinc-900 mb-4",
+              }}
+              nested
+            >
+              <ScrollArea>
+                <AutoForm
+                  schema={newUserFormSchema}
+                  onSubmit={(data) => console.log(data)}
+                  formProps={{
+                    className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
+                  }}
+                  withSubmit
+                />
+              </ScrollArea>
+            </CustomDrawer>
             <ScrollArea>
-              <AutoForm
-                schema={newUserFormSchema}
-                onSubmit={(data) => console.log(data)}
-                formProps={{
-                  className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
-                }}
-                withSubmit
-              />
+              <div className="flex flex-col gap-4 mb-20">
+                {[user, user, user, user].map((user) => (
+                  <OneUser key={user.id} user={user} />
+                ))}
+              </div>
             </ScrollArea>
           </CustomDrawer>
-          <ScrollArea>
-            <div className="flex flex-col gap-4 mb-20">
-              {[user, user, user, user].map((user) => (
-                <OneUser key={user.id} user={user} />
-              ))}
-            </div>
-          </ScrollArea>
-        </CustomDrawer>
-      </div>
+        </div>
+      )}
       <Tabs defaultValue="upcoming" className="w-full mt-4">
         <TabsList className="mb-2 flex flex-col md:flex-row h-full w-full md:w-max justify-start">
           <TabsTrigger
