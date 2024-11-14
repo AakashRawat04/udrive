@@ -26,6 +26,15 @@ const AuthContext = createContext<AuthContextType>({
   },
 });
 
+export async function getUser(): Promise<User | null> {
+  try {
+    const response: APIResponse<User> = await api("/auth/user");
+    return response.data;
+  } catch (error) {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
@@ -44,25 +53,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.data) {
-        toast.error(response.error);
-        return;
+        throw new Error(response.error!);
       }
 
       localStorage.setItem("token", response.data);
 
-      const userResponse: APIResponse<User> = await api("/auth/user");
-      if (!userResponse.data) {
-        toast.error(userResponse.error);
-        return;
+      const user = await getUser();
+      if (!user) {
+        throw new Error("Failed to fetch user");
       }
 
-      setUser(userResponse.data);
+      setUser(user);
       toast.success("Logged in successfully");
       router.navigate({
         to: "/",
       });
     } catch (error) {
       console.log(error);
+      setUser(null);
       toast.error("An error occurred while logging in");
     }
   }
@@ -76,16 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      try {
-        const response: APIResponse<User> = await api("/auth/user");
-        if (response.data) {
-          setUser(response.data);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        setUser(null);
-      }
+      const user = await getUser();
+      setUser(user);
     };
     fetchUser();
   }, []);
