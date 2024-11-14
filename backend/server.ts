@@ -17,7 +17,7 @@ const api = new Hono()
 	.route("/", carJourney)
 	.route("/", rating);
 
-export const app = new Hono()
+const app = new Hono()
 	.use(cors())
 	.use(logger())
 	.get("/healthcheck", () => {

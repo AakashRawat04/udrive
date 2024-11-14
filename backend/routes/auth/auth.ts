@@ -19,12 +19,13 @@ export const auth = new Hono()
 
     console.log(response);
     if (response.length === 0) {
-      return c.json({ error: "User not found" });
+      return c.json({ error: "User not found", data: null });
     }
 
     const userResponse = response[0];
+
     if (userResponse.password !== body.password) {
-      return c.json({ error: "Invalid password" });
+      return c.json({ error: "Invalid password", data: null });
     }
 
     const token = await sign(
@@ -36,7 +37,7 @@ export const auth = new Hono()
       process.env.JWT_SECRET!
     );
 
-    return c.json({ data: token });
+    return c.json({ data: token, error: null });
   })
 
   .post("/register", vValidator("json", registerSchema), async (c) => {
@@ -57,6 +58,20 @@ export const auth = new Hono()
     }
   })
 
+  .get("/user", jwt({ secret: process.env.JWT_SECRET! }), async (c) => {
+    const payload = c.get("jwtPayload") as { email: string; role: string };
+
+    const response = await db
+      .select()
+      .from(userDbSchema)
+      .where(eq(userDbSchema.email, payload.email));
+
+    if (response.length === 0) {
+      return c.json({ error: "User not found", data: null }, 404);
+    }
+
+    return c.json({ data: response[0] });
+  })
   // route for super admins only to create admin users
   .post(
     "/admin.create",

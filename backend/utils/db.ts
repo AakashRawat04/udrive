@@ -5,7 +5,7 @@ import postgres from "postgres";
 export const db = drizzle(
 	postgres({
 		host: process.env.HOST!,
-		user: process.env.USERNAME!,
+		user: process.env.USER_NAME!,
 		password: process.env.PASSWORD!,
 		port: Number(process.env.PORT!),
 		database: process.env.DATABASE!,
