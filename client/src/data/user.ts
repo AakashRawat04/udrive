@@ -30,3 +30,5 @@ export const editUserSchema = z.object({
 export const newUserFormSchema = new ZodProvider(newUserSchema);
 export const editUserFormSchema = new ZodProvider(editUserSchema);
 export type User = z.infer<typeof userSchema>;
+export type NewUser = z.infer<typeof newUserSchema>;
+export type EditUser = z.infer<typeof editUserSchema>;

@@ -3,8 +3,11 @@ import { Outlet, createRootRoute, redirect } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { Toaster } from "sonner";
 import { AuthProvider, getUser } from "@/providers/AuthProvider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const whiteList = ["/user/login", "/user/register", "/admin/login", "/"];
+
+const client = new QueryClient();
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -25,14 +28,16 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <AuthProvider>
-      <div className="flex min-h-screen w-full flex-col">
-        <Nav />
-        <Outlet />
-      </div>
-      <Toaster />
-      <TanStackRouterDevtools position="bottom-right" />
-    </AuthProvider>
+    <QueryClientProvider client={client}>
+      <AuthProvider>
+        <div className="flex min-h-screen w-full flex-col">
+          <Nav />
+          <Outlet />
+        </div>
+        <Toaster />
+        <TanStackRouterDevtools position="bottom-right" />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

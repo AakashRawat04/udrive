@@ -5,21 +5,23 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { car, carFormSchema, type Car } from "@/data/car";
 import { cn } from "@/lib/classes";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { format, set } from "date-fns";
 import {
-  createFileRoute,
-  Link,
-  redirect,
-  useRouter,
-} from "@tanstack/react-router";
-import { format } from "date-fns";
-import { ArrowRight, CalendarIcon, CarIcon, Loader2Icon } from "lucide-react";
+  ArrowRight,
+  CalendarIcon,
+  CarIcon,
+  Loader2Icon,
+  RefreshCcw,
+} from "lucide-react";
 import type React from "react";
 import { AutoForm } from "@/components/ui/autoform";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   editUserFormSchema,
   newUserFormSchema,
-  user as user,
+  type EditUser,
+  type NewUser,
   type User,
 } from "@/data/user";
 import {
@@ -31,11 +33,13 @@ import { PopoverClose } from "@radix-ui/react-popover";
 import { useState } from "react";
 import {
   addBranchFormSchema,
-  branch,
   editBranchFormSchema,
   type Branch,
 } from "@/data/branch";
 import { useAuth } from "@/providers/AuthProvider";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, type APIResponse } from "@/lib/api";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
@@ -48,6 +52,10 @@ function CustomDrawer({
   drawerContentProps,
   children,
   nested = false,
+  isLoading = false,
+  onRefetch,
+  drawerOpen,
+  setDrawerOpen,
 }: {
   title: string;
   triggerTitle?: string | React.ReactNode;
@@ -55,12 +63,27 @@ function CustomDrawer({
   drawerContentProps?: React.ComponentPropsWithoutRef<typeof Drawer.Content>;
   children?: React.ReactNode;
   nested?: boolean;
+  isLoading?: boolean;
+  onRefetch?: () => void;
+  drawerOpen?: boolean;
+  setDrawerOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const Root = nested ? Drawer.Root : Drawer.NestedRoot;
 
   return (
-    <Root direction="right" shouldScaleBackground repositionInputs={true}>
-      <Drawer.Trigger asChild>
+    <Root
+      direction="right"
+      shouldScaleBackground
+      repositionInputs={true}
+      open={drawerOpen}
+      onOpenChange={setDrawerOpen}
+    >
+      <Drawer.Trigger
+        asChild
+        onClick={() => {
+          setDrawerOpen?.(false);
+        }}
+      >
         <Button {...triggerComponentProps}>{triggerTitle || title}</Button>
       </Drawer.Trigger>
       <Drawer.Portal>
@@ -79,11 +102,34 @@ function CustomDrawer({
           }
         >
           <div className="bg-zinc-50 h-full w-full grow p-5 flex flex-col md:rounded-[16px]">
-            <Drawer.Title className="font-medium mb-4 text-zinc-900 underline underline-offset-4">
+            <Drawer.Title className="font-medium mb-4 text-zinc-900 underline underline-offset-4 flex gap-2 items-center">
               {title}
+              <span>
+                <Button
+                  variant="secondary"
+                  className={cn("rounded-xl")}
+                  onClick={onRefetch}
+                  size="icon"
+                >
+                  <RefreshCcw
+                    className={cn("size-4 hidden", !isLoading && "block")}
+                  />
+                  <Loader2Icon
+                    className={cn(
+                      "animate-spin hidden size-4 text-gray-400",
+                      isLoading && "block"
+                    )}
+                  />
+                </Button>
+              </span>
             </Drawer.Title>
             {children}
-            <Drawer.Close className="fixed left-1/2 -translate-x-1/2 bottom-5">
+            <Drawer.Close
+              className="fixed left-1/2 -translate-x-1/2 bottom-5"
+              onClick={() => {
+                setDrawerOpen?.(false);
+              }}
+            >
               <Button
                 variant="destructive"
                 className="rounded-xl bg-black hover:bg-black/80"
@@ -193,15 +239,65 @@ function OneBranch({ branch }: { branch: Branch }) {
 
 function OneUser({ user }: { user: User }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const queryClient = useQueryClient();
 
-  const handleDelete = async () => {
-    setIsOpen(false);
-    setIsDeleting(true);
-    console.log("Deleting user");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsDeleting(false);
-  };
+  const handleDeleteAdmin = useMutation({
+    mutationFn: async (id: string) => {
+      setIsOpen(false);
+      const response = await api<APIResponse<string>>(
+        `/auth/admin.delete/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      toast.success("Admin deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admins"],
+      });
+    },
+  });
+
+  const handleUpdateAdmin = useMutation({
+    mutationFn: async (
+      user: EditUser & {
+        id: string;
+      }
+    ) => {
+      const response = await api<APIResponse<string>>(
+        `/auth/admin.update/${user.id}`,
+        {
+          body: user,
+          method: "PUT",
+        }
+      );
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      toast.success("Admin updated successfully");
+      setIsEditDrawerOpen(false);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admins"],
+      });
+    },
+  });
 
   return (
     <Button
@@ -221,13 +317,36 @@ function OneUser({ user }: { user: User }) {
               className:
                 "w-max bg-gray-100 rounded-lg flex justify-center items-center font-medium text-zinc-900 mt-2",
             }}
+            drawerOpen={isEditDrawerOpen}
+            setDrawerOpen={setIsEditDrawerOpen}
             nested
           >
             <ScrollArea>
               <AutoForm
                 schema={editUserFormSchema}
                 values={user}
-                onSubmit={(data) => console.log(data)}
+                onSubmit={(data) =>
+                  handleUpdateAdmin.mutateAsync({
+                    ...data,
+                    id: user.id,
+                  })
+                }
+                uiComponents={{
+                  SubmitButton: ({ children }) => {
+                    return (
+                      <Button
+                        className="w-full font-semibold py-2 px-4 rounded-md mt-4"
+                        size="lg"
+                        disabled={handleUpdateAdmin.isPending}
+                      >
+                        {handleUpdateAdmin.isPending && (
+                          <Loader2Icon className="animate-spin" />
+                        )}
+                        {children}
+                      </Button>
+                    );
+                  },
+                }}
                 formProps={{
                   className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
                 }}
@@ -240,10 +359,13 @@ function OneUser({ user }: { user: User }) {
               <Button
                 variant="destructive"
                 className="w-max rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
-                disabled={isDeleting}
+                disabled={handleDeleteAdmin.isPending}
               >
                 <Loader2Icon
-                  className={cn("animate-spin hidden", isDeleting && "block")}
+                  className={cn(
+                    "animate-spin hidden",
+                    handleDeleteAdmin.isPending && "block"
+                  )}
                 />
                 Delete User
               </Button>
@@ -269,8 +391,8 @@ function OneUser({ user }: { user: User }) {
                   <Button
                     variant="destructive"
                     className="w-full rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
+                    onClick={() => handleDeleteAdmin.mutateAsync(user.id)}
+                    disabled={handleDeleteAdmin.isPending}
                   >
                     Continue
                   </Button>
@@ -335,9 +457,83 @@ function OneCar({ car }: { car: Car }) {
   );
 }
 
+async function addNewAdmin(admin: NewUser) {
+  const response = await api<APIResponse<string>>("/auth/admin.create", {
+    body: admin,
+    method: "POST",
+  });
+
+  if (!response.data) {
+    throw new Error(response.error!);
+  }
+}
+
 function Dashboard() {
   const router = useRouter();
   const auth = useAuth();
+  const queryClient = useQueryClient();
+  const [addNewUserDrawerOpen, setAddNewUserDrawerOpen] = useState(false);
+
+  const admins = useQuery({
+    queryKey: ["admins"],
+    queryFn: async () => {
+      const admins = await api<APIResponse<User[]>>("/auth/admin.getAllAdmins");
+
+      if (!admins.data) {
+        throw new Error(admins.error);
+      }
+
+      return admins.data;
+    },
+    refetchInterval: 10000,
+    enabled: auth.user?.role === "super_admin",
+  });
+
+  const handleAddAdmin = useMutation({
+    mutationFn: addNewAdmin,
+    onSuccess: () => {
+      setAddNewUserDrawerOpen(false);
+      toast.success("Admin added successfully");
+      queryClient.invalidateQueries({
+        queryKey: ["admins"],
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const branches = useQuery({
+    queryKey: ["branches"],
+    queryFn: async () => {
+      const branches = await api<APIResponse<Branch[]>>("/branch.getAll");
+
+      if (!branches.data) {
+        throw new Error(branches.error);
+      }
+
+      return branches.data;
+    },
+    refetchInterval: 10000,
+    enabled: auth.user?.role === "super_admin",
+  });
+
+  const cars = useQuery({
+    queryKey: ["cars"],
+    queryFn: async () => {
+      const cars = await api<APIResponse<Car[]>>("/car.getAll");
+
+      if (!cars.data) {
+        throw new Error(cars.error);
+      }
+
+      return cars.data;
+    },
+    refetchInterval: 10000,
+    enabled: auth.user?.role === "super_admin",
+  });
+
+  console.log(admins.isLoading, admins.isRefetching);
 
   if (auth.user?.role === "user") {
     router.navigate({
@@ -359,6 +555,8 @@ function Dashboard() {
               className:
                 "bg-blue-500 hover:bg-blue-600/90 text-white font-bold py-2 px-4 rounded-md",
             }}
+            isLoading={cars.isPending || cars.isRefetching}
+            onRefetch={cars.refetch}
           >
             <CustomDrawer
               title="Add Car"
@@ -387,9 +585,7 @@ function Dashboard() {
             </CustomDrawer>
             <ScrollArea>
               <div className="flex flex-col gap-4 mb-20">
-                {[car, car, car, car].map((car) => (
-                  <OneCar key={car.id} car={car} />
-                ))}
+                {cars.data?.map((car) => <OneCar key={car.id} car={car} />)}
               </div>
             </ScrollArea>
           </CustomDrawer>
@@ -400,6 +596,8 @@ function Dashboard() {
               className:
                 "bg-green-500 hover:bg-green-600/90 text-white font-bold py-2 px-4 rounded-md",
             }}
+            isLoading={branches.isPending || branches.isRefetching}
+            onRefetch={branches.refetch}
           >
             <CustomDrawer
               title="Add Branch"
@@ -424,7 +622,7 @@ function Dashboard() {
             </CustomDrawer>
             <ScrollArea>
               <div className="flex flex-col gap-4 mb-20">
-                {[branch, branch, branch, branch].map((branch) => (
+                {branches.data?.map((branch) => (
                   <OneBranch key={branch.id} branch={branch} />
                 ))}
               </div>
@@ -437,6 +635,8 @@ function Dashboard() {
               className:
                 "bg-yellow-600 hover:bg-yellow-700/90 text-white font-bold py-2 px-4 rounded-md",
             }}
+            isLoading={admins.isPending || admins.isRefetching}
+            onRefetch={admins.refetch}
           >
             <CustomDrawer
               title="Add Admin"
@@ -446,12 +646,30 @@ function Dashboard() {
                 className:
                   "w-full h-[100px] bg-accent rounded-xl flex justify-center items-center font-medium text-zinc-900 mb-4",
               }}
+              drawerOpen={addNewUserDrawerOpen}
+              setDrawerOpen={setAddNewUserDrawerOpen}
               nested
             >
               <ScrollArea>
                 <AutoForm
                   schema={newUserFormSchema}
-                  onSubmit={(data) => console.log(data)}
+                  onSubmit={(data) => handleAddAdmin.mutateAsync(data)}
+                  uiComponents={{
+                    SubmitButton: ({ children }) => {
+                      return (
+                        <Button
+                          className="w-full font-semibold py-2 px-4 rounded-md mt-4"
+                          size="lg"
+                          disabled={handleAddAdmin.isPending}
+                        >
+                          {handleAddAdmin.isPending && (
+                            <Loader2Icon className="animate-spin" />
+                          )}
+                          {children}
+                        </Button>
+                      );
+                    },
+                  }}
                   formProps={{
                     className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
                   }}
@@ -461,7 +679,7 @@ function Dashboard() {
             </CustomDrawer>
             <ScrollArea>
               <div className="flex flex-col gap-4 mb-20">
-                {[user, user, user, user].map((user) => (
+                {admins.data?.map((user) => (
                   <OneUser key={user.id} user={user} />
                 ))}
               </div>

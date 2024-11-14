@@ -10,3 +10,9 @@ export const registerSchema = v.object({
 	email: v.pipe(v.string(), v.email()),
 	password: v.string(),
 });
+
+export const editAdminSchema = v.object({
+	name: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(255))),
+	email: v.optional(v.pipe(v.string(), v.email())),
+	password: v.optional(v.string()),
+});
