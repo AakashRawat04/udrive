@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Drawer } from "vaul";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { car, carFormSchema, type Car } from "@/data/car";
+import { car, addCarSchema, type Car } from "@/data/car";
 import { cn } from "@/lib/classes";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -22,8 +22,9 @@ import {
   CarIcon,
   Loader2Icon,
   RefreshCcw,
+  Trash2,
 } from "lucide-react";
-import React from "react";
+import React, { useRef } from "react";
 import { AutoForm } from "@/components/ui/autoform";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -583,7 +584,39 @@ function OneUser({ user }: { user: User }) {
   );
 }
 
-function OneCar({ car }: { car: Car }) {
+function OneCar({ car, branch }: { car: Car; branch: Branch }) {
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const deleteCarMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api<APIResponse<string>>(`/car.delete/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      toast.success("Car deleted successfully");
+    },
+    onError: (error) => {
+      if (error instanceof FetchError) {
+        toast.error(error.data.error);
+        return;
+      }
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["cars"],
+      });
+    },
+  });
+
   return (
     <Button
       variant="outline"
@@ -605,9 +638,10 @@ function OneCar({ car }: { car: Car }) {
           <p className="text-gray-600">{car.ratePerHour} / hr</p>
         </div>
         <div>
-          <p className="text-gray-600 mr-1">{car.branch}</p>
-          <p className="text-gray-600">{car.address.slice(0, 40)}...</p>
+          <p className="text-gray-600">{branch.name},</p>
+          <p className="text-gray-600 mr-1">{branch.address}</p>
         </div>
+        <div className="flex gap-2">
         <CustomDrawer
           title="Edit Car"
           triggerComponentProps={{
@@ -615,20 +649,65 @@ function OneCar({ car }: { car: Car }) {
             className:
               "w-max bg-gray-100 rounded-lg flex justify-center items-center font-medium text-zinc-900 mt-2",
           }}
+          setDrawerOpen={setIsEditDrawerOpen}
+          drawerOpen={isEditDrawerOpen}
           nested
         >
-          <ScrollArea>
-            <AutoForm
-              schema={carFormSchema}
-              values={car}
-              onSubmit={(data) => console.log(data)}
-              formProps={{
-                className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
-              }}
-              withSubmit
-            />
+          <ScrollArea className="mb-12">
+            <CarForm car={car} onCarAdded={
+              () => {
+                setIsEditDrawerOpen(false);
+              }
+            } />
           </ScrollArea>
         </CustomDrawer>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="destructive"
+              className="w-max rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
+              disabled={deleteCarMutation.isPending}
+            >
+              <Loader2Icon
+                className={cn(
+                  "animate-spin hidden",
+                  deleteCarMutation.isPending && "block"
+                )}
+              />
+              Delete Car
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="rounded-lg">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-lg font-semibold">
+                Are you absolutely sure?
+              </h2>
+              <p className="text-gray-600">
+                This action cannot be undone. This will permanently delete the
+                car.
+              </p>
+              <div className="flex gap-2">
+                <PopoverClose asChild>
+                  <Button
+                    variant="secondary"
+                    className="w-full rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
+                  >
+                    Cancel
+                  </Button>
+                </PopoverClose>
+                <Button
+                  variant="destructive"
+                  className="w-full rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
+                  onClick={() => deleteCarMutation.mutateAsync(car.id)}
+                  disabled={deleteCarMutation.isPending}
+                >
+                  Continue
+                </Button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+        </div>
       </div>
     </Button>
   );
@@ -648,12 +727,501 @@ async function addNewAdmin(admin: NewUser) {
   }
 }
 
+function CarForm({ car, onCarAdded }: { car?: Car; onCarAdded?: () => void }) {
+  const queryClient = useQueryClient();
+  const branches = queryClient.getQueryData<{ branch: Branch; user: User }[]>([
+    "branches",
+  ]);
+
+  const branchNames = branches?.map((branch) => branch.branch.name) ?? [];
+
+  if (car) {
+    car.branch = branches?.find(
+      (branch) => branch.branch.id === car.branch
+    )?.branch.name ?? "no-branch-available";
+  }
+
+
+  const form = useForm<z.infer<typeof addCarSchema>>({
+    resolver: zodResolver(addCarSchema),
+    defaultValues: car,
+  });
+
+  const [images, setImages] = useState<File[]>([]);
+  const [currentImage, setCurrentImage] = useState<File | null>(null);
+  const uploadImageInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async (image: File) => {
+      setCurrentImage(image);
+      const formData = new FormData();
+      formData.append("image", image);
+
+      const response = await api<APIResponse<string>>("/image.upload", {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      return response.data;
+    },
+    onError: (error) => {
+      if (error instanceof FetchError) {
+        toast.error(error.data.error);
+        return;
+      }
+      toast.error(error.message ?? "An error occurred");
+    },
+    onSettled: () => {
+      uploadImageInputRef.current?.value &&
+        (uploadImageInputRef.current.value = "");
+      setCurrentImage(null);
+    },
+  });
+
+  const route = car ? `/car.update` : "/car.create";
+  const method = car ? "PUT" : "POST";
+
+  const createCarMutation = useMutation({
+    mutationFn: async (car: z.infer<typeof addCarSchema>) => {
+      const response = await api<APIResponse<string>>(route, {
+        body: {
+          ...car,
+          id: car.id,
+        },
+        method,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      onCarAdded?.();
+
+      toast.success("Car added successfully");
+    },
+    onError: (error) => {
+      if (error instanceof FetchError) {
+        toast.error(error.data.error);
+        return;
+      }
+      toast.error(error.message ?? "An error occurred");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["cars"],
+      });
+    },
+  });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: async (url: string) => {
+      const imageKey = url.split("/").pop();
+
+      if (!imageKey) {
+        throw new Error("Invalid image url");
+      }
+
+      const imageName = images.find(
+        (image) => image.name === imageKey.slice(0, imageKey.lastIndexOf("-"))
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const response = await api<APIResponse<string>>(
+        `/image.delete/${imageKey}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      setImages(images.filter((image) => image.name !== imageName?.name));
+      form.setValue(
+        "images",
+        (form.getValues("images") ?? []).filter((imgUrl) => imgUrl !== url)
+      );
+      return response.data;
+    },
+    onError: (error) => {
+      if (error instanceof FetchError) {
+        toast.error(error.data.error);
+        return;
+      }
+      toast.error(error.message ?? "An error occurred");
+    },
+  });
+
+  async function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (images.some((image) => image.name === file.name)) {
+      return;
+    }
+
+    event.currentTarget.value = "";
+
+    const imageUrl = await uploadImageMutation.mutateAsync(file);
+    form.setValue("images", [...(form.getValues("images") ?? []), imageUrl]);
+
+    setImages([...images, file]);
+    setCurrentImage(null);
+  }
+
+  const onSubmit = form.handleSubmit(async (data) => {
+    const car = data;
+    car.branch =
+      branches?.find((branch) => branch.branch.name === car.branch)?.branch
+        .id ?? "no-branch-available";
+
+    await createCarMutation.mutateAsync(car);
+  });
+
+  return (
+    <Form {...form}>
+      <form className="p-1 mr-4 flex flex-col gap-4" onSubmit={onSubmit}>
+        <FormField
+          control={form.control}
+          name="brand"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="brand">Brand</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Car Brand" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="model"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="model">Model</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Car Model" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="year"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="year">Year</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Car Year" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="regNo"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="regNo">Registration Number</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Registration Number" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="images"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="images">Images</FormLabel>
+              <FormControl>
+                <Input
+                  onChange={handleImageUpload}
+                  accept="image/jpg,image/jpeg,image/png,image/webp"
+                  type="file"
+                  placeholder="image"
+                  disabled={uploadImageMutation.isPending}
+                />
+              </FormControl>
+              <div
+                className={cn(
+                  "bg-accent rounded-xl grid grid-cols-1 md:grid-cols-3 text-zinc-900 p-2 gap-2 text-sm min-h-[100px]"
+                )}
+              >
+                {field.value?.map((image) => (
+                  <div className="relative bg-accent border border-input rounded-md">
+                    <img
+                      src={image}
+                      alt="Car"
+                      className={cn(
+                        "w-full rounded-md object-cover aspect-square",
+                        deleteImageMutation.isPending && "opacity-20"
+                      )}
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      type="button"
+                      className="rounded-lg size-7 absolute right-1 top-1"
+                      onClick={async () => {
+                        await deleteImageMutation.mutateAsync(image);
+                      }}
+                      disabled={deleteImageMutation.isPending}
+                    >
+                      {deleteImageMutation.isPending ? (
+                        <Loader2Icon className="animate-spin" />
+                      ) : (
+                        <Trash2 />
+                      )}
+                    </Button>
+                  </div>
+                ))}
+                {uploadImageMutation.isPending ? (
+                  <div className="bg-accent border border-input rounded-md relative">
+                    <img
+                      src={
+                        currentImage
+                          ? URL.createObjectURL(currentImage)
+                          : undefined
+                      }
+                      alt="Car"
+                      className="w-full rounded-md object-cover opacity-20 aspect-square"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      type="button"
+                      className="rounded-lg size-7 absolute right-1 top-1"
+                      disabled
+                    >
+                      <Loader2Icon className="animate-spin" />
+                    </Button>
+                  </div>
+                ) : (
+                  (field.value ?? []).length === 0 && (
+                    <div className="w-full h-full row-span-3 col-span-3 flex justify-center items-center">
+                      <p>No images uploaded</p>
+                    </div>
+                  )
+                )}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="ratePerHour"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="ratePerHour">Rate Per Hour</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  step={0.001}
+                  type="number"
+                  placeholder="Rate Per Hour"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="mileage"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="mileage">Mileage</FormLabel>
+              <FormControl>
+                <Input {...field} type="number" placeholder="Mileage" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="branch"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="branch">Branch</FormLabel>
+              <FormControl>
+                <Select
+                  defaultValue={field.value}
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
+                  <SelectTrigger>
+                    {field.value ?? "Select a branch"}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branchNames.map((branch) => (
+                      <SelectItem key={branch} value={branch}>
+                        {branch}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {/* fuelType, transmission, seats, topSpeed */}
+        <FormField
+          control={form.control}
+          name="fuelType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="fuelType">Fuel Type</FormLabel>
+              <FormControl>
+                <Select
+                  defaultValue={field.value}
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
+                  <SelectTrigger>
+                    {field.value ?? "Select Fuel Type"}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Petrol", "Diesel", "Electric"].map((fuelType) => (
+                      <SelectItem key={fuelType} value={fuelType}>
+                        {fuelType}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="transmission"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="transmission">Transmission</FormLabel>
+              <FormControl>
+                <Select
+                  defaultValue={field.value}
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
+                  <SelectTrigger>
+                    {field.value ?? "Select Transmission"}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Automatic", "Manual"].map((transmission) => (
+                      <SelectItem key={transmission} value={transmission}>
+                        {transmission}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="seats"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="seats">Seats</FormLabel>
+              <FormControl>
+                <Input {...field} type="number" placeholder="Seats" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="topSpeed"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="topSpeed">Top Speed</FormLabel>
+              <FormControl>
+                <Input {...field} type="number" placeholder="Top Speed" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="coordinates.lat"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="lat">Latitude</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Latitude" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="coordinates.lng"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel htmlFor="lng">Longitude</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Longitude" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button
+          type="submit"
+          className="w-full font-semibold py-2 px-4 rounded-md mt-4"
+          disabled={createCarMutation.isPending}
+        >
+          {createCarMutation.isPending && (
+            <Loader2Icon className="animate-spin" />
+          )}
+          {car ? "Update Car" : "Add Car"}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
 function Dashboard() {
   const router = useRouter();
   const auth = useAuth();
   const queryClient = useQueryClient();
   const [addNewUserDrawerOpen, setAddNewUserDrawerOpen] = useState(false);
   const [addNewBranchDrawerOpen, setAddNewBranchDrawerOpen] = useState(false);
+  const [addNewCarDrawerOpen, setAddNewCarDrawerOpen] = useState(false);
 
   const admins = useQuery({
     queryKey: ["admins"],
@@ -770,7 +1338,14 @@ function Dashboard() {
   const cars = useQuery({
     queryKey: ["cars"],
     queryFn: async () => {
-      const cars = await api<APIResponse<Car[]>>("/car.getAll", {
+      const cars = await api<
+        APIResponse<
+          {
+            car: Car;
+            branch: Branch;
+          }[]
+        >
+      >("/car.getAll", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -821,22 +1396,23 @@ function Dashboard() {
                 className:
                   "w-full h-[100px] bg-accent rounded-xl flex justify-center items-center font-medium text-zinc-900 mb-4",
               }}
+              drawerOpen={addNewCarDrawerOpen}
+              setDrawerOpen={setAddNewCarDrawerOpen}
               nested
             >
-              <ScrollArea>
-                <AutoForm
-                  schema={carFormSchema}
-                  onSubmit={(data) => console.log(data)}
-                  formProps={{
-                    className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
+              <ScrollArea className="mb-12">
+                <CarForm
+                  onCarAdded={() => {
+                    setAddNewCarDrawerOpen(false);
                   }}
-                  withSubmit
                 />
               </ScrollArea>
             </CustomDrawer>
             <ScrollArea>
               <div className="flex flex-col gap-4 mb-20">
-                {cars.data?.map((car) => <OneCar key={car.id} car={car} />)}
+                {cars.data?.map(({ car, branch }) => (
+                  <OneCar key={car.id} car={car} branch={branch} />
+                ))}
               </div>
             </ScrollArea>
           </CustomDrawer>

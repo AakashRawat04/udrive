@@ -1,4 +1,5 @@
 import {
+	json,
 	numeric,
 	pgEnum,
 	pgTable,
@@ -15,10 +16,22 @@ export const carDbSchema = pgTable("car", {
 	id: uuid("id").notNull().primaryKey().defaultRandom(),
 	brand: varchar("brand", { length: 255 }).notNull(),
 	model: varchar("model", { length: 255 }).notNull(),
-	year: varchar("year", { length: 255 }).notNull(),
+	year: numeric("year").notNull(),
 	branch: uuid("branch")
 		.references(() => branchDbSchema.id)
 		.notNull(),
+	regNo: varchar("reg_no", { length: 255 }).notNull(),
+	images: json("images").$type<string[]>().notNull(),
+	ratePerHour: numeric("rate_per_hour").notNull(),
+	mileage: numeric("mileage").notNull(),
+	fuelType: varchar("fuel_type", { length: 255 }).notNull(),
+	transmission: varchar("transmission", { length: 255 }).notNull(),
+	seats: numeric("seats").notNull(),
+	topSpeed: numeric("top_speed").notNull(),
+	coordinates: json("coordinates").$type<{
+		lat: number;
+		lng: number;
+	}>().notNull(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -66,16 +79,29 @@ export const carJourneyDbSchema = pgTable("car_journey", {
 export const carSchema = v.object({
 	brand: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
 	model: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
-	year: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
+	year: v.number(),
 	branch: v.pipe(v.string(), v.uuid()),
+	regNo: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
+	images: v.array(v.string()),
+	ratePerHour: v.number(),
+	mileage: v.number(),
+	fuelType: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
+	transmission: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
+	seats: v.number(),
+	topSpeed: v.number(),
+	coordinates: v.object({
+		lat: v.number(),
+		lng: v.number(),
+	}),
+});
+
+export const imageUploadSchema = v.object({
+	image: v.file(),
 });
 
 export const updateCarSchema = v.object({
 	id: v.pipe(v.string(), v.uuid()),
-	brand: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
-	model: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
-	year: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
-	branch: v.pipe(v.string(), v.uuid()),
+	...carSchema.entries,
 });
 
 export const assignCarSchema = v.object({

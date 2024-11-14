@@ -54,43 +54,23 @@ export const carSchema = z.object({
 });
 
 export const addCarSchema = z.object({
+  id: z.string().optional(),
   brand: z.string(),
   model: z.string(),
-  year: z.number().min(1900).max(new Date().getFullYear()),
-  regNo: z.string(),
-  images: z.array(z.string().url()),
-  ratePerHour: z.number(),
-  mileage: z.number(),
-  fuelType: z.enum(["Petrol", "Diesel", "Electric"]).superRefine(
-    fieldConfig<React.ReactNode, FieldTypes>({
-      fieldType: "string",
-    })
-  ),
-  transmission: z.enum(["Automatic", "Manual"]).superRefine(
-    fieldConfig<React.ReactNode, FieldTypes>({
-      fieldType: "string",
-    })
-  ),
-  seats: z.number(),
-  topSpeed: z.number(),
-  address: z.string(),
+  year: z.coerce.number().min(1900).max(new Date().getFullYear()),
+  regNo: z.string().length(10),
+  images: z.array(z.string().url()).min(1),
+  ratePerHour: z.coerce.number().min(0),
+  mileage: z.coerce.number().min(0),
+  branch: z.string(),
+  fuelType: z.enum(["Petrol", "Diesel", "Electric"]),
+  transmission: z.enum(["Automatic", "Manual"]),
+  seats: z.coerce.number().min(1).max(10),
+  topSpeed: z.coerce.number().min(0),
   coordinates: z.object({
-    lat: z.number().superRefine(
-      fieldConfig<React.ReactNode, FieldTypes>({
-        inputProps: {
-          step: 0.000001,
-        },
-      })
-    ),
-    lng: z.number().superRefine(
-      fieldConfig<React.ReactNode, FieldTypes>({
-        inputProps: {
-          step: 0.000001,
-        },
-      })
-    ),
+    lat: z.coerce.number().min(-90).max(90),
+    lng: z.coerce.number().min(-180).max(180),
   }),
 });
 
-export const carFormSchema = new ZodProvider(addCarSchema);
 export type Car = z.infer<typeof carSchema>;

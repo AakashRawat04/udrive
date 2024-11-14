@@ -7,10 +7,25 @@ import {
   assignCarSchema,
   carDbSchema,
   carSchema,
+  imageUploadSchema,
   updateCarSchema,
 } from "../../schema/car";
 import { userTypes } from "../../utils/constants";
 import { db } from "../../utils/db";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+
+// Initialize S3 client
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION!,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export const car = new Hono()
   .use(
@@ -18,6 +33,69 @@ export const car = new Hono()
       secret: process.env.JWT_SECRET!,
     })
   )
+
+  .post("/image.upload", vValidator("form", imageUploadSchema), async (c) => {
+    const user = c.get("jwtPayload");
+    const body = c.req.valid("form");
+
+    // check if user is super admin
+    if (user.role !== userTypes.SUPER_ADMIN) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    try {
+      const file = body.image;
+      const fileBuffer = await file.arrayBuffer();
+      const fileName = `${file.name}-${Date.now()}`;
+
+      const command = new PutObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME!,
+        Key: `cars/${fileName}`,
+        Body: Buffer.from(fileBuffer),
+        ContentType: file.type,
+        ACL: "public-read",
+      });
+
+      await s3Client.send(command);
+
+      const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/cars/${fileName}`;
+
+      return c.json({
+        data: imageUrl,
+      });
+    } catch (error) {
+      console.error("Error uploading to S3:", error);
+      return c.json({ error: "Failed to upload image" }, 500);
+    }
+  })
+
+  .delete("/image.delete/:key", async (c) => {
+    const user = c.get("jwtPayload");
+    const key = c.req.param("key");
+
+    // check if user is super admin
+    if (user.role !== userTypes.SUPER_ADMIN) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    try {
+      const command = new DeleteObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME!,
+        Key: `cars/${key}`,
+      });
+
+      await s3Client.send(command);
+
+      return c.json({
+        data: {
+          message: "Image deleted successfully",
+        },
+      });
+    } catch (error) {
+      console.error("Error deleting from S3:", error);
+      return c.json({ error: "Failed to delete image" }, 500);
+    }
+  })
 
   // create car (super admin only)
   .post("/car.create", vValidator("json", carSchema), async (c) => {
@@ -150,7 +228,10 @@ export const car = new Hono()
 
   // get all cars
   .get("/car.getAll", async (c) => {
-    const cars = await db.select().from(carDbSchema);
+    const cars = await db
+      .select()
+      .from(carDbSchema)
+      .leftJoin(branchDbSchema, eq(carDbSchema.branch, branchDbSchema.id));
     return c.json({ data: cars });
   })
 
