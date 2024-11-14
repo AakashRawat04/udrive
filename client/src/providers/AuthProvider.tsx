@@ -26,10 +26,12 @@ const AuthContext = createContext<AuthContextType>({
   },
 });
 
-export async function getUser(token?: string): Promise<User | null> {
+export async function getUser(): Promise<User | null> {
   try {
     const response: APIResponse<User> = await api("/auth/user", {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
     });
     return response.data;
   } catch (error) {
@@ -55,18 +57,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await api<APIResponse<string>>("/auth/login", {
         body: { email, password },
         method: "POST",
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
 
       if (!response.data) {
         throw new Error(response.error!);
       }
 
-      const user = await getUser(response.data);
+      localStorage.setItem("token", response.data);
+      const user = await getUser();
       if (!user) {
         throw new Error("Failed to fetch user");
       }
-
-      localStorage.setItem("token", response.data);
       setUser(user);
       toast.success("Logged in successfully");
       window.location.reload();

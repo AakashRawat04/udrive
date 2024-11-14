@@ -35,6 +35,9 @@ function LoginForm() {
       const { data, error } = await api<APIResponse<string>>("/auth/register", {
         body: { name, email, password },
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
       if (!data) {

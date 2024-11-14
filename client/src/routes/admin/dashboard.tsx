@@ -170,6 +170,9 @@ function OneBranch({ branch, user }: { branch: Branch; user: User }) {
       setIsOpen(false);
       const response = await api<APIResponse<string>>(`/branch.delete/${id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
       if (!response.data) {
@@ -207,6 +210,9 @@ function OneBranch({ branch, user }: { branch: Branch; user: User }) {
       const response = await api<APIResponse<string>>(`/branch.update`, {
         body: branch,
         method: "PUT",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
       if (!response.data) {
@@ -410,6 +416,9 @@ function OneUser({ user }: { user: User }) {
         `/auth/admin.delete/${id}`,
         {
           method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
       );
 
@@ -444,6 +453,9 @@ function OneUser({ user }: { user: User }) {
         {
           body: user,
           method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
       );
 
@@ -626,6 +638,9 @@ async function addNewAdmin(admin: NewUser) {
   const response = await api<APIResponse<string>>("/auth/admin.create", {
     body: admin,
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
   });
 
   if (!response.data) {
@@ -643,7 +658,14 @@ function Dashboard() {
   const admins = useQuery({
     queryKey: ["admins"],
     queryFn: async () => {
-      const admins = await api<APIResponse<User[]>>("/auth/admin.getAllAdmins");
+      const admins = await api<APIResponse<User[]>>(
+        "/auth/admin.getAllAdmins",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       if (!admins.data) {
         throw new Error(admins.error);
@@ -697,6 +719,9 @@ function Dashboard() {
       const response = await api<APIResponse<string>>("/branch.create", {
         body: branch,
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
       if (!response.data) {
@@ -726,7 +751,11 @@ function Dashboard() {
             user: User;
           }[]
         >
-      >("/branch.getAll");
+      >("/branch.getAll", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
       if (!branches.data) {
         throw new Error(branches.error);
@@ -741,7 +770,11 @@ function Dashboard() {
   const cars = useQuery({
     queryKey: ["cars"],
     queryFn: async () => {
-      const cars = await api<APIResponse<Car[]>>("/car.getAll");
+      const cars = await api<APIResponse<Car[]>>("/car.getAll", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
       if (!cars.data) {
         throw new Error(cars.error);
