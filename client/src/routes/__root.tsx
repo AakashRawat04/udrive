@@ -5,18 +5,30 @@ import { Toaster } from "sonner";
 import { AuthProvider, getUser } from "@/providers/AuthProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const whiteList = ["/user/login", "/user/register", "/admin/login", "/"];
+const whiteList = ["/user/login", "/user/register", "/"];
 
 const client = new QueryClient();
 
 export const Route = createRootRoute({
   component: RootComponent,
   async beforeLoad(ctx) {
+    const user = await getUser();
+
     if (whiteList.includes(ctx.location.pathname)) {
+      if (user && ctx.location.pathname !== "/") {
+        if (user.role === "admin" || user.role === "super_admin") {
+          throw redirect({
+            to: "/admin/dashboard",
+          });
+        }
+
+        throw redirect({
+          to: "/",
+        });
+      }
+
       return;
     }
-
-    const user = await getUser();
 
     if (!user) {
       throw redirect({

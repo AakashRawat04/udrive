@@ -26,9 +26,11 @@ const AuthContext = createContext<AuthContextType>({
   },
 });
 
-export async function getUser(): Promise<User | null> {
+export async function getUser(token?: string): Promise<User | null> {
   try {
-    const response: APIResponse<User> = await api("/auth/user");
+    const response: APIResponse<User> = await api("/auth/user", {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
     return response.data;
   } catch (error) {
     return null;
@@ -42,6 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function logout() {
     localStorage.removeItem("token");
     setUser(null);
+    router.navigate({
+      to: "/",
+    });
     toast.success("Logged out successfully");
   }
 
@@ -56,22 +61,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(response.error!);
       }
 
-      localStorage.setItem("token", response.data);
-
-      const user = await getUser();
+      const user = await getUser(response.data);
       if (!user) {
         throw new Error("Failed to fetch user");
       }
 
+      localStorage.setItem("token", response.data);
       setUser(user);
       toast.success("Logged in successfully");
-      router.navigate({
-        to: "/",
-      });
+      window.location.reload();
     } catch (error) {
       console.log(error);
       setUser(null);
-      toast.error("An error occurred while logging in");
+      toast.error(error instanceof Error ? error.message : "Failed to log in");
     }
   }
 
