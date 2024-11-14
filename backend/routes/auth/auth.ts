@@ -2,10 +2,15 @@ import { vValidator } from "@hono/valibot-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { jwt, sign } from "hono/jwt";
-import { editAdminSchema, loginSchema, registerSchema } from "../../schema/auth";
+import {
+	editAdminSchema,
+	loginSchema,
+	registerSchema,
+} from "../../schema/auth";
 import { userDbSchema } from "../../schema/user";
 import { userTypes } from "../../utils/constants";
 import { db } from "../../utils/db";
+import postgres from "postgres";
 
 export const auth = new Hono()
 
@@ -107,38 +112,38 @@ export const auth = new Hono()
     }
   )
 
-	.put(
-		"/admin.update/:userId",
-		vValidator("json", editAdminSchema),
-		jwt({
-			secret: process.env.JWT_SECRET!,
-		}),
-		async (c) => {
-			try {
-				const body = c.req.valid("json");
+  .put(
+    "/admin.update/:userId",
+    vValidator("json", editAdminSchema),
+    jwt({
+      secret: process.env.JWT_SECRET!,
+    }),
+    async (c) => {
+      try {
+        const body = c.req.valid("json");
 
-				// check if the user is a super admin
-				const jwtPayload = c.get("jwtPayload");
-				if (jwtPayload.role !== userTypes.SUPER_ADMIN) {
-					return c.json({ error: "Unauthorized" });
-				}
+        // check if the user is a super admin
+        const jwtPayload = c.get("jwtPayload");
+        if (jwtPayload.role !== userTypes.SUPER_ADMIN) {
+          return c.json({ error: "Unauthorized" });
+        }
 
-				await db
-					.update(userDbSchema)
-					.set({
-						name: body.name,
-						email: body.email,
-						password: body.password,
-					})
-					.where(eq(userDbSchema.id, c.req.param("userId")));
+        await db
+          .update(userDbSchema)
+          .set({
+            name: body.name,
+            email: body.email,
+            password: body.password,
+          })
+          .where(eq(userDbSchema.id, c.req.param("userId")));
 
-				return c.json({ data: "admin updated successfully" });
-			} catch (e) {
-				console.error(e);
-				return c.json({ error: "An error occurred" });
-			}
-		}
-	)
+        return c.json({ data: "admin updated successfully" });
+      } catch (e) {
+        console.error(e);
+        return c.json({ error: "An error occurred" });
+      }
+    }
+  )
 
   .get(
     "/admin.getAllAdmins",
@@ -171,11 +176,19 @@ export const auth = new Hono()
         return c.json({ error: "Unauthorized" });
       }
 
-      const response = await db
-        .delete(userDbSchema)
-        .where(eq(userDbSchema.id, c.req.param("userId")));
-
-      return c.json({ data: response });
+      try {
+        const response = await db
+          .delete(userDbSchema)
+          .where(eq(userDbSchema.id, c.req.param("userId")));
+        return c.json({ data: response });
+      } catch (e) {
+        if (e instanceof postgres.PostgresError) {
+					if (e.message.includes("violates foreign key constraint")) {
+						return c.json({ error: "User has branches assigned to him" }, 400);
+					}
+				}
+				throw e;
+      }
     }
   );
 

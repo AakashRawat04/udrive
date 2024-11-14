@@ -6,7 +6,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { car, carFormSchema, type Car } from "@/data/car";
 import { cn } from "@/lib/classes";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   ArrowRight,
   CalendarIcon,
@@ -14,7 +23,7 @@ import {
   Loader2Icon,
   RefreshCcw,
 } from "lucide-react";
-import type React from "react";
+import React from "react";
 import { AutoForm } from "@/components/ui/autoform";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -31,15 +40,21 @@ import {
 } from "@/components/ui/popover";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { useState } from "react";
-import {
-  addBranchFormSchema,
-  editBranchFormSchema,
-  type Branch,
-} from "@/data/branch";
+import { type Branch } from "@/data/branch";
 import { useAuth } from "@/providers/AuthProvider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type APIResponse } from "@/lib/api";
 import { toast } from "sonner";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
+import { FetchError } from "ofetch";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
@@ -52,7 +67,7 @@ function CustomDrawer({
   drawerContentProps,
   children,
   nested = false,
-  isLoading = false,
+  isLoading,
   onRefetch,
   drawerOpen,
   setDrawerOpen,
@@ -104,24 +119,26 @@ function CustomDrawer({
           <div className="bg-zinc-50 h-full w-full grow p-5 flex flex-col md:rounded-[16px]">
             <Drawer.Title className="font-medium mb-4 text-zinc-900 underline underline-offset-4 flex gap-2 items-center">
               {title}
-              <span>
-                <Button
-                  variant="secondary"
-                  className={cn("rounded-xl")}
-                  onClick={onRefetch}
-                  size="icon"
-                >
-                  <RefreshCcw
-                    className={cn("size-4 hidden", !isLoading && "block")}
-                  />
-                  <Loader2Icon
-                    className={cn(
-                      "animate-spin hidden size-4 text-gray-400",
-                      isLoading && "block"
-                    )}
-                  />
-                </Button>
-              </span>
+              {isLoading !== undefined && onRefetch !== undefined && (
+                <span>
+                  <Button
+                    variant="secondary"
+                    className={cn("rounded-xl")}
+                    onClick={onRefetch}
+                    size="icon"
+                  >
+                    <RefreshCcw
+                      className={cn("size-4 hidden", !isLoading && "block")}
+                    />
+                    <Loader2Icon
+                      className={cn(
+                        "animate-spin hidden size-4 text-gray-400",
+                        isLoading && "block"
+                      )}
+                    />
+                  </Button>
+                </span>
+              )}
             </Drawer.Title>
             {children}
             <Drawer.Close
@@ -144,17 +161,98 @@ function CustomDrawer({
   );
 }
 
-function OneBranch({ branch }: { branch: Branch }) {
+function OneBranch({ branch, user }: { branch: Branch; user: User }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
 
-  const handleDelete = async () => {
-    setIsOpen(false);
-    setIsDeleting(true);
-    console.log("Deleting user");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsDeleting(false);
-  };
+  const handleDeleteBranch = useMutation({
+    mutationFn: async (id: string) => {
+      setIsOpen(false);
+      const response = await api<APIResponse<string>>(`/branch.delete/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      toast.success("Branch deleted successfully");
+      setIsEditDrawerOpen(false);
+    },
+    onError: (error) => {
+      if (error instanceof FetchError) {
+        toast.error(error.data.error);
+        return;
+      }
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["branches"],
+      });
+    },
+  });
+
+  const handleUpdateBranch = useMutation({
+    mutationFn: async (branch: {
+      id: string;
+      name: string;
+      address: string;
+      admin: string;
+    }) => {
+      branch.admin =
+        admins?.find((admin) => admin.email === branch.admin)?.id ??
+        "no-admin-available";
+
+      const response = await api<APIResponse<string>>(`/branch.update`, {
+        body: branch,
+        method: "PUT",
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      toast.success("Branch updated successfully");
+      setIsEditDrawerOpen(false);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["branches"],
+      });
+    },
+  });
+
+  const queryClient = useQueryClient();
+
+  const admins = queryClient.getQueryData<User[]>(["admins"]);
+  const selectAdmins = admins?.map((admin) => admin.email) ?? [];
+
+  const editBranchSchema = z.object({
+    name: z.string().max(255),
+    address: z.string(),
+    admin: z.string().email(),
+  });
+
+  const form = useForm<z.infer<typeof editBranchSchema>>({
+    resolver: zodResolver(editBranchSchema),
+    defaultValues: {
+      name: branch.name,
+      address: branch.address,
+      admin: user.email,
+    },
+  });
+
+  const onSubmit = form.handleSubmit(async (data) => {
+    await handleUpdateBranch.mutateAsync({
+      ...data,
+      id: branch.id,
+    });
+    form.reset();
+  });
 
   return (
     <Button
@@ -165,7 +263,9 @@ function OneBranch({ branch }: { branch: Branch }) {
         <h2 className="text-lg font-semibold  inline-block mr-1">
           {branch.name}
         </h2>
-        <p className="text-gray-600 inline-block">{branch.admin}</p>
+        <p className="text-gray-600 inline-block">
+          {user.name} ({user.email})
+        </p>
         <div className="flex gap-2">
           <CustomDrawer
             title="Edit Branch"
@@ -174,18 +274,76 @@ function OneBranch({ branch }: { branch: Branch }) {
               className:
                 "w-max bg-gray-100 rounded-lg flex justify-center items-center font-medium text-zinc-900 mt-2",
             }}
+            drawerOpen={isEditDrawerOpen}
+            setDrawerOpen={setIsEditDrawerOpen}
             nested
           >
             <ScrollArea>
-              <AutoForm
-                schema={editBranchFormSchema}
-                values={branch}
-                onSubmit={(data) => console.log(data)}
-                formProps={{
-                  className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
-                }}
-                withSubmit
-              />
+              <Form {...form}>
+                <form onSubmit={onSubmit} className="p-1 flex flex-col gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="name">Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Branch Name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="address">Address</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Branch Address" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="admin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="admin">Admin</FormLabel>
+                        <FormControl>
+                          <Select
+                            defaultValue={field.value}
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <SelectTrigger>{field.value}</SelectTrigger>
+                            <SelectContent>
+                              {selectAdmins.map((admin) => (
+                                <SelectItem key={admin} value={admin}>
+                                  {admin}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    className="w-full font-semibold py-2 px-4 rounded-md mt-4"
+                  >
+                    {handleUpdateBranch.isPending && (
+                      <Loader2Icon className="animate-spin" />
+                    )}
+                    Update Branch
+                  </Button>
+                </form>
+              </Form>
             </ScrollArea>
           </CustomDrawer>
           <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -193,10 +351,13 @@ function OneBranch({ branch }: { branch: Branch }) {
               <Button
                 variant="destructive"
                 className="w-max rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
-                disabled={isDeleting}
+                disabled={handleDeleteBranch.isPending}
               >
                 <Loader2Icon
-                  className={cn("animate-spin hidden", isDeleting && "block")}
+                  className={cn(
+                    "animate-spin hidden",
+                    handleDeleteBranch.isPending && "block"
+                  )}
                 />
                 Delete Branch
               </Button>
@@ -222,8 +383,8 @@ function OneBranch({ branch }: { branch: Branch }) {
                   <Button
                     variant="destructive"
                     className="w-full rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
+                    onClick={() => handleDeleteBranch.mutateAsync(branch.id)}
+                    disabled={handleDeleteBranch.isPending}
                   >
                     Continue
                   </Button>
@@ -259,6 +420,10 @@ function OneUser({ user }: { user: User }) {
       toast.success("Admin deleted successfully");
     },
     onError: (error) => {
+      if (error instanceof FetchError) {
+        toast.error(error.data.error);
+        return;
+      }
       toast.error(error.message);
     },
     onSettled: () => {
@@ -473,6 +638,7 @@ function Dashboard() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const [addNewUserDrawerOpen, setAddNewUserDrawerOpen] = useState(false);
+  const [addNewBranchDrawerOpen, setAddNewBranchDrawerOpen] = useState(false);
 
   const admins = useQuery({
     queryKey: ["admins"],
@@ -489,6 +655,25 @@ function Dashboard() {
     enabled: auth.user?.role === "super_admin",
   });
 
+  const selectAdmins = admins.data?.map((admin) => admin.email) ?? [];
+
+  const addBranchSchema = z.object({
+    name: z.string().max(255),
+    address: z.string(),
+    admin: z.string().email(),
+  });
+
+  type AddBranch = z.infer<typeof addBranchSchema>;
+
+  const form = useForm<z.infer<typeof addBranchSchema>>({
+    resolver: zodResolver(addBranchSchema),
+  });
+
+  const onSubmit = form.handleSubmit(async (data) => {
+    await handleAddBranch.mutateAsync(data);
+    form.reset();
+  });
+
   const handleAddAdmin = useMutation({
     mutationFn: addNewAdmin,
     onSuccess: () => {
@@ -503,10 +688,45 @@ function Dashboard() {
     },
   });
 
+  const handleAddBranch = useMutation({
+    mutationFn: async (branch: AddBranch) => {
+      branch.admin =
+        admins.data?.find((admin) => admin.email === branch.admin)?.id ??
+        "no-admin-available";
+
+      const response = await api<APIResponse<string>>("/branch.create", {
+        body: branch,
+        method: "POST",
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      toast.success("Branch added successfully");
+      setAddNewBranchDrawerOpen(false);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["branches"],
+      });
+    },
+  });
+
   const branches = useQuery({
     queryKey: ["branches"],
     queryFn: async () => {
-      const branches = await api<APIResponse<Branch[]>>("/branch.getAll");
+      const branches = await api<
+        APIResponse<
+          {
+            branch: Branch;
+            user: User;
+          }[]
+        >
+      >("/branch.getAll");
 
       if (!branches.data) {
         throw new Error(branches.error);
@@ -532,8 +752,6 @@ function Dashboard() {
     refetchInterval: 10000,
     enabled: auth.user?.role === "super_admin",
   });
-
-  console.log(admins.isLoading, admins.isRefetching);
 
   if (auth.user?.role === "user") {
     router.navigate({
@@ -607,23 +825,88 @@ function Dashboard() {
                 className:
                   "w-full h-[100px] bg-accent rounded-xl flex justify-center items-center font-medium text-zinc-900 mb-4",
               }}
+              drawerOpen={addNewBranchDrawerOpen}
+              setDrawerOpen={setAddNewBranchDrawerOpen}
               nested
             >
               <ScrollArea>
-                <AutoForm
-                  schema={addBranchFormSchema}
-                  onSubmit={(data) => console.log(data)}
-                  formProps={{
-                    className: "pl-1 pr-5 mb-20 flex flex-col gap-2",
-                  }}
-                  withSubmit
-                />
+                <Form {...form}>
+                  <form onSubmit={onSubmit} className="p-1 flex flex-col gap-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="name">Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Branch Name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="address">Address</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Branch Address" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="admin"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="admin">Admin</FormLabel>
+                          <FormControl>
+                            <Select
+                              defaultValue={field.value}
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
+                              <SelectTrigger>
+                                {field.value ?? "Select Admin"}
+                              </SelectTrigger>
+                              <SelectContent>
+                                {selectAdmins.map((admin) => (
+                                  <SelectItem key={admin} value={admin}>
+                                    {admin}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      className="w-full font-semibold py-2 px-4 rounded-md mt-4"
+                    >
+                      {handleAddBranch.isPending && (
+                        <Loader2Icon className="animate-spin" />
+                      )}
+                      Update Branch
+                    </Button>
+                  </form>
+                </Form>
               </ScrollArea>
             </CustomDrawer>
             <ScrollArea>
               <div className="flex flex-col gap-4 mb-20">
-                {branches.data?.map((branch) => (
-                  <OneBranch key={branch.id} branch={branch} />
+                {branches.data?.map((data) => (
+                  <OneBranch
+                    key={data.branch.id}
+                    branch={data.branch}
+                    user={data.user}
+                  />
                 ))}
               </div>
             </ScrollArea>

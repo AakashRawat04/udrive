@@ -10,6 +10,8 @@ import {
 } from "../../schema/branch";
 import { userTypes } from "../../utils/constants";
 import { db } from "../../utils/db";
+import { userDbSchema } from "../../schema/user";
+import postgres from "postgres";
 
 export const branch = new Hono()
   .use(
@@ -29,17 +31,14 @@ export const branch = new Hono()
       return c.json({ error: "Unauthorized" });
     }
 
-    //fetch if user with id and role = superadmin or admin exists or not
+    // fetch if user with id and role = superadmin or admin exists or not
     const userResponse = await db
       .select()
-      .from(user)
+      .from(userDbSchema)
       .where(
         and(
-          eq(user.id, body.admin),
-          or(
-            eq(user.role, userTypes.SUPER_ADMIN),
-            eq(user.role, userTypes.ADMIN)
-          )
+          eq(userDbSchema.id, body.admin),
+          eq(userDbSchema.role, userTypes.ADMIN)
         )
       );
 
@@ -95,22 +94,34 @@ export const branch = new Hono()
       return c.json({ error: "Unauthorized" });
     }
 
-    const response = await db
-      .delete(branchDbSchema)
-      .where(eq(branchDbSchema.id, id))
-      .returning();
-    console.log(response);
+    try {
+      const response = await db
+        .delete(branchDbSchema)
+        .where(eq(branchDbSchema.id, id))
+        .returning();
+      console.log(response);
 
-    if (response.length === 0) {
-      return c.json({ error: "Branch not deleted" });
+      if (response.length === 0) {
+        return c.json({ error: "Branch not deleted" });
+      }
+
+      return c.json({ data: `deleted branch with id ${id}` });
+    } catch (e) {
+      if (e instanceof postgres.PostgresError) {
+        if (e.message.includes("violates foreign key constraint")) {
+          return c.json({ error: "Cars are assigned to this branch" }, 400);
+        }
+      }
+      throw e;
     }
-
-    return c.json({ data: `deleted branch with id ${id}` });
   })
 
   // get all branches
   .get("/branch.getAll", async (c) => {
-    const branches = await db.select().from(branchDbSchema);
+    const branches = await db
+      .select()
+      .from(branchDbSchema)
+      .leftJoin(userDbSchema, eq(branchDbSchema.admin, userDbSchema.id));
     return c.json({ data: branches });
   })
 
