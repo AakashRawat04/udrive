@@ -105,6 +105,30 @@ export const carRequest = new Hono()
 			});
 		}
 
+		// check if the car is already booked by the user
+		const userCarRequests = await db
+			.select()
+			.from(carRequestDbSchema)
+			.where(
+				and(
+					eq(carRequestDbSchema.car, body.car),
+					eq(carRequestDbSchema.user, userResponse[0].id),
+					or(
+						and(
+							eq(carRequestDbSchema.from, new Date(body.from)),
+							eq(carRequestDbSchema.to, new Date(body.to))
+						),
+						eq(carRequestDbSchema.status, carRequestStatus.APPROVED)
+					)
+				)
+			);
+
+		if (userCarRequests.length > 0) {
+			return c.json({
+				error: "Car is already booked by the user in the specified time frame",
+			});
+		}
+
 		// create car request
 		const carRequestBody = {
 			...body,
