@@ -4,8 +4,25 @@ meta {
   seq: 2
 }
 
-get {
-  url: {{BASE_URL}}/api/car.getAll
-  body: none
+post {
+  url: {{BASE_URL}}/api/car.create
+  body: json
   auth: none
+}
+
+body:json {
+  {
+    "brand": "Toyota",
+    "model": "Corolla",
+    "year": 2022,
+    "branch": "8272466c-6ceb-4e9a-a2ae-7b0261c57f3e",
+    "regNo": "ABC1234",
+    "ratePerHour": 20.5,
+    "mileage": 15000,
+    "fuelType": "Petrol",
+    "transmission": "Automatic",
+    "seats": 5,
+    "topSpeed": 180
+  }
+  
 }

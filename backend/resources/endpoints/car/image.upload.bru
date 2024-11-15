@@ -1,0 +1,20 @@
+meta {
+  name: image.upload
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{BASE_URL}}/api/image.upload
+  body: multipartForm
+  auth: inherit
+}
+
+body:json {
+  
+  
+}
+
+body:multipart-form {
+  image: @file(/home/ash/Downloads/textractreceipts/multiple taxes/wallmart3.jpeg)
+}
