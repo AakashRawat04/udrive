@@ -1,4 +1,5 @@
 import {
+	integer,
 	json,
 	numeric,
 	pgEnum,
@@ -16,18 +17,18 @@ export const carDbSchema = pgTable("car", {
 	id: uuid("id").notNull().primaryKey().defaultRandom(),
 	brand: varchar("brand", { length: 255 }).notNull(),
 	model: varchar("model", { length: 255 }).notNull(),
-	year: numeric("year").notNull(),
+	year: integer("year").notNull(),
 	branch: uuid("branch")
 		.references(() => branchDbSchema.id)
 		.notNull(),
 	regNo: varchar("reg_no", { length: 255 }).notNull(),
 	images: json("images").$type<string[]>().notNull(),
-	ratePerHour: numeric("rate_per_hour").notNull(),
-	mileage: numeric("mileage").notNull(),
+	ratePerHour: integer("rate_per_hour").notNull(),
+	mileage: integer("mileage").notNull(),
 	fuelType: varchar("fuel_type", { length: 255 }).notNull(),
 	transmission: varchar("transmission", { length: 255 }).notNull(),
-	seats: numeric("seats").notNull(),
-	topSpeed: numeric("top_speed").notNull(),
+	seats: integer("seats").notNull(),
+	topSpeed: integer("top_speed").notNull(),
 	coordinates: json("coordinates").$type<{
 		lat: number;
 		lng: number;
