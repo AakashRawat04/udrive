@@ -85,7 +85,7 @@ export const carSchema = v.object({
 	fuelType: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
 	transmission: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
 	seats: v.number(),
-	topSpeed: v.number()
+	topSpeed: v.number(),
 });
 
 export const imageUploadSchema = v.object({
@@ -103,11 +103,9 @@ export const assignCarSchema = v.object({
 });
 
 export const carRequestSchema = v.object({
-	branch: v.pipe(v.string(), v.uuid()),
 	car: v.pipe(v.string(), v.uuid()),
-	user: v.pipe(v.string(), v.uuid()),
-	from: v.date(),
-	to: v.date(),
+	from: v.pipe(v.string(), v.isoDate()),
+	to: v.pipe(v.string(), v.isoDate()),
 });
 
 export const updateCarRequestSchema = v.object({
@@ -119,19 +117,19 @@ export const updateCarRequestSchema = v.object({
 export const startCarJourneySchema = v.object({
 	car: v.pipe(v.string(), v.uuid()),
 	user: v.pipe(v.string(), v.uuid()),
-	startTime: v.date(),
+	startTime: v.pipe(v.string(), v.isoDate()),
 });
 
 export const endCarJourneySchema = v.object({
 	id: v.pipe(v.string(), v.uuid()),
-	endTime: v.date(),
+	endTime: v.pipe(v.string(), v.isoDate()),
 });
 
 export const updateCarJourneySchema = v.object({
 	id: v.pipe(v.string(), v.uuid()),
 	car: v.pipe(v.string(), v.uuid()),
 	user: v.pipe(v.string(), v.uuid()),
-	startTime: v.optional(v.date()),
-	endTime: v.optional(v.date()),
+	startTime: v.optional(v.pipe(v.string(), v.isoDate())),
+	endTime: v.optional(v.pipe(v.string(), v.isoDate())),
 	finalPrice: v.optional(v.string()),
 });
