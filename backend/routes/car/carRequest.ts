@@ -247,17 +247,17 @@ export const carRequest = new Hono()
 			}
 
 			// If the request is approved, reject other pending requests for the same car
-			if (body.status === carRequestStatus.APPROVED) {
-				await db
-					.update(carRequestDbSchema)
-					.set({ status: carRequestStatus.REJECTED })
-					.where(
-						and(
-							eq(carRequestDbSchema.car, carRequestResponse[0].car),
-							eq(carRequestDbSchema.status, carRequestStatus.PENDING)
-						)
-					);
-			}
+			// if (body.status === carRequestStatus.APPROVED) {
+			// 	await db
+			// 		.update(carRequestDbSchema)
+			// 		.set({ status: carRequestStatus.REJECTED })
+			// 		.where(
+			// 			and(
+			// 				eq(carRequestDbSchema.car, carRequestResponse[0].car),
+			// 				eq(carRequestDbSchema.status, carRequestStatus.PENDING)
+			// 			)
+			// 		);
+			// }
 
 			return c.json({ data: response[0] });
 		}
