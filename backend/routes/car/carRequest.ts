@@ -152,6 +152,38 @@ export const carRequest = new Hono()
 		return c.json({ data: response[0] });
 	})
 
+	// list all car requests by user id
+	.get("/car.request.list", async (c) => {
+		const user = c.get("jwtPayload");
+		console.log(user);
+
+		// check if user is user
+		if (user.role !== userTypes.USER) {
+			return c.json({ error: "Unauthorized" });
+		}
+
+		// check if the user with id exists or not
+		const userResponse = await db
+			.select()
+			.from(userDbSchema)
+			.where(eq(userDbSchema.email, user.email));
+
+		console.log("userResponse", userResponse);
+		if (userResponse.length === 0) {
+			return c.json({ error: "User not found" });
+		}
+
+		// fetch car requests by user
+		const response = await db
+			.select()
+			.from(carRequestDbSchema)
+			.where(eq(carRequestDbSchema.user, userResponse[0].id));
+
+		console.log(response);
+
+		return c.json({ data: response });
+	})
+
 	// list car requests by branch
 	.get("/car.request.list.by.branch/:branchId/:status", async (c) => {
 		const user = c.get("jwtPayload");

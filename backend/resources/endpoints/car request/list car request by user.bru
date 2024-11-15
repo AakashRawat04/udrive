@@ -1,0 +1,20 @@
+meta {
+  name: list car request by user
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{BASE_URL}}/api/car.request.list
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": "8272466c-6ceb-4e9a-a2ae-7b0261c57f3e",
+    "car": "7664ec74-ac34-4f9f-818d-87aba1e6f49e",
+    "status": "approved"
+  }
+  
+}
