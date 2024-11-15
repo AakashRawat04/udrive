@@ -177,7 +177,12 @@ export const carRequest = new Hono()
 		const response = await db
 			.select()
 			.from(carRequestDbSchema)
-			.where(eq(carRequestDbSchema.user, userResponse[0].id));
+			.where(eq(carRequestDbSchema.user, userResponse[0].id))
+			.leftJoin(carDbSchema, eq(carRequestDbSchema.car, carDbSchema.id))
+			.leftJoin(
+				branchDbSchema,
+				eq(carRequestDbSchema.branch, branchDbSchema.id)
+			);
 
 		console.log(response);
 
