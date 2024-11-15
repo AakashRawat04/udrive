@@ -29,10 +29,6 @@ export const carDbSchema = pgTable("car", {
 	transmission: varchar("transmission", { length: 255 }).notNull(),
 	seats: integer("seats").notNull(),
 	topSpeed: integer("top_speed").notNull(),
-	coordinates: json("coordinates").$type<{
-		lat: number;
-		lng: number;
-	}>().notNull(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -89,11 +85,7 @@ export const carSchema = v.object({
 	fuelType: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
 	transmission: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
 	seats: v.number(),
-	topSpeed: v.number(),
-	coordinates: v.object({
-		lat: v.number(),
-		lng: v.number(),
-	}),
+	topSpeed: v.number()
 });
 
 export const imageUploadSchema = v.object({
