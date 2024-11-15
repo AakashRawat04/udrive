@@ -642,71 +642,73 @@ function OneCar({ car, branch }: { car: Car; branch: Branch }) {
           <p className="text-gray-600 mr-1">{branch.address}</p>
         </div>
         <div className="flex gap-2">
-        <CustomDrawer
-          title="Edit Car"
-          triggerComponentProps={{
-            variant: "outline",
-            className:
-              "w-max bg-gray-100 rounded-lg flex justify-center items-center font-medium text-zinc-900 mt-2",
-          }}
-          setDrawerOpen={setIsEditDrawerOpen}
-          drawerOpen={isEditDrawerOpen}
-          nested
-        >
-          <ScrollArea className="mb-12">
-            <CarForm car={car} onCarAdded={
-              () => {
-                setIsEditDrawerOpen(false);
-              }
-            } />
-          </ScrollArea>
-        </CustomDrawer>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="destructive"
-              className="w-max rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
-              disabled={deleteCarMutation.isPending}
-            >
-              <Loader2Icon
-                className={cn(
-                  "animate-spin hidden",
-                  deleteCarMutation.isPending && "block"
-                )}
+          <CustomDrawer
+            title="Edit Car"
+            triggerComponentProps={{
+              variant: "outline",
+              className:
+                "w-max bg-gray-100 rounded-lg flex justify-center items-center font-medium text-zinc-900 mt-2",
+            }}
+            setDrawerOpen={setIsEditDrawerOpen}
+            drawerOpen={isEditDrawerOpen}
+            nested
+          >
+            <ScrollArea className="mb-12">
+              <CarForm
+                car={car}
+                branch={branch}
+                onCarAdded={() => {
+                  setIsEditDrawerOpen(false);
+                }}
               />
-              Delete Car
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="rounded-lg">
-            <div className="flex flex-col gap-2">
-              <h2 className="text-lg font-semibold">
-                Are you absolutely sure?
-              </h2>
-              <p className="text-gray-600">
-                This action cannot be undone. This will permanently delete the
-                car.
-              </p>
-              <div className="flex gap-2">
-                <PopoverClose asChild>
+            </ScrollArea>
+          </CustomDrawer>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="destructive"
+                className="w-max rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
+                disabled={deleteCarMutation.isPending}
+              >
+                <Loader2Icon
+                  className={cn(
+                    "animate-spin hidden",
+                    deleteCarMutation.isPending && "block"
+                  )}
+                />
+                Delete Car
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="rounded-lg">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-lg font-semibold">
+                  Are you absolutely sure?
+                </h2>
+                <p className="text-gray-600">
+                  This action cannot be undone. This will permanently delete the
+                  car.
+                </p>
+                <div className="flex gap-2">
+                  <PopoverClose asChild>
+                    <Button
+                      variant="secondary"
+                      className="w-full rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
+                    >
+                      Cancel
+                    </Button>
+                  </PopoverClose>
                   <Button
-                    variant="secondary"
+                    variant="destructive"
                     className="w-full rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
+                    onClick={() => deleteCarMutation.mutateAsync(car.id)}
+                    disabled={deleteCarMutation.isPending}
                   >
-                    Cancel
+                    Continue
                   </Button>
-                </PopoverClose>
-                <Button
-                  variant="destructive"
-                  className="w-full rounded-lg flex justify-center items-center font-medium mt-2 border border-input"
-                  onClick={() => deleteCarMutation.mutateAsync(car.id)}
-                  disabled={deleteCarMutation.isPending}
-                >
-                  Continue
-                </Button>
+                </div>
               </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </Button>
@@ -727,7 +729,7 @@ async function addNewAdmin(admin: NewUser) {
   }
 }
 
-function CarForm({ car, onCarAdded }: { car?: Car; onCarAdded?: () => void }) {
+function CarForm({ car, branch, onCarAdded }: { car?: Car, branch?: Branch; onCarAdded?: () => void }) {
   const queryClient = useQueryClient();
   const branches = queryClient.getQueryData<{ branch: Branch; user: User }[]>([
     "branches",
@@ -736,11 +738,12 @@ function CarForm({ car, onCarAdded }: { car?: Car; onCarAdded?: () => void }) {
   const branchNames = branches?.map((branch) => branch.branch.name) ?? [];
 
   if (car) {
-    car.branch = branches?.find(
-      (branch) => branch.branch.id === car.branch
-    )?.branch.name ?? "no-branch-available";
+    console.log("gegre", car)
+    const carBranch = branches?.find((data) => data.branch.id === branch?.id);
+    if (carBranch) {
+      car.branch = carBranch.branch.name
+    }
   }
-
 
   const form = useForm<z.infer<typeof addCarSchema>>({
     resolver: zodResolver(addCarSchema),
@@ -811,7 +814,7 @@ function CarForm({ car, onCarAdded }: { car?: Car; onCarAdded?: () => void }) {
     },
     onError: (error) => {
       if (error instanceof FetchError) {
-        toast.error(error.data.error);
+        toast.error(error.data.error ?? "An error occurred");
         return;
       }
       toast.error(error.message ?? "An error occurred");
@@ -1039,12 +1042,7 @@ function CarForm({ car, onCarAdded }: { car?: Car; onCarAdded?: () => void }) {
             <FormItem>
               <FormLabel htmlFor="ratePerHour">Rate Per Hour</FormLabel>
               <FormControl>
-                <Input
-                  {...field}
-                  step={0.001}
-                  type="number"
-                  placeholder="Rate Per Hour"
-                />
+                <Input {...field} type="number" placeholder="Rate Per Hour" />
               </FormControl>
               <FormMessage />
             </FormItem>

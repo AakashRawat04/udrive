@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { GearIcon, PersonIcon } from "@radix-ui/react-icons";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useParams } from "@tanstack/react-router";
 import {
   ArrowRight,
   CalendarIcon,
@@ -22,31 +22,47 @@ import { useEffect, useRef, useState } from "react";
 import { Car } from "@/data/car";
 import { api, type APIResponse } from "@/lib/api";
 import type { Branch } from "@/data/branch";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/car/$carId")({
   component: BookCar,
-  async loader(ctx) {
-    const response = await api<APIResponse<{ car: Car; branch: Branch }>>(
-      `/car.getById/${ctx.params.carId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        method: "GET",
-      }
-    );
-
-    if (!response.data) {
-      throw new Error(response.error);
-    }
-
-    return response.data;
-  },
 });
 
 function BookCar() {
-  const { car, branch } = Route.useLoaderData();
   const todayDate = new Date();
+  const { carId } = Route.useParams();
+
+  const carDetails = useQuery({
+    queryKey: ["car", carId],
+    queryFn: async () => {
+      const response = await api<APIResponse<{ car: Car; branch: Branch }>>(
+        `/car.getById/${carId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          method: "GET",
+        }
+      );
+
+      if (!response.data) {
+        throw new Error(response.error);
+      }
+
+      return response.data;
+    },
+    refetchInterval: 10000,
+  })
+
+  if (carDetails.isLoading || !carDetails.data) {
+    return <div>Loading...</div>
+  }
+
+  if (carDetails.isError) {
+    return <div>Error: {carDetails.error.message}</div>
+  }
+
+  const { car, branch } = carDetails.data;
 
   return (
     <div className="flex flex-col p-4 md:p-10">
