@@ -3,76 +3,96 @@ import {
   CogIcon,
   DropletsIcon,
   FuelIcon,
-  GaugeIcon,
-  UsersIcon,
+  GaugeIcon, UsersIcon
 } from "lucide-react";
-import { Card, CardContent } from "../ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Carousel, CarouselContent, CarouselItem } from "../ui/carousel";
+import { Badge } from "../ui/badge";
+import { Separator } from "../ui/separator";
 import { Car } from "@/data/car";
+import { branch } from "@/data/branch";
 
 export const CarCard = ({ car }: { car: Car }) => (
-  <Card className="w-full max-w-7xl">
-    <CardContent className="p-0 flex flex-col md:flex-row">
-      <div className="w-full md:w-2/5">
-        <Carousel
-          className="rounded-md"
-          opts={{
-            loop: true,
-          }}
-          plugins={[
-            Autoplay({
-              delay: 2000,
-            }),
-          ]}
-        >
-          <CarouselContent>
-            {car.images.map((image, index) => (
-              <CarouselItem key={index}>
+  <Card className="w-full hover:shadow-lg transition-shadow duration-200 overflow-hidden">
+    <CardHeader className="p-0">
+      <Carousel
+        className="w-full"
+        opts={{
+          loop: true,
+        }}
+        plugins={[
+          Autoplay({
+            delay: 2000,
+          }),
+        ]}
+      >
+        <CarouselContent>
+          {car.images.map((image, index) => (
+            <CarouselItem key={index}>
+              <div className="relative aspect-[16/9]">
                 <img
                   src={image}
                   alt={`${car.model} - Image ${index + 1}`}
-                  className="w-full h-full object-cover rounded-md"
+                  className="w-full h-full object-cover"
                 />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+    </CardHeader>
+    <CardContent className="p-6">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="text-2xl font-bold">
+            {car.brand} {car.model}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {car.year} • {car.regNo}
+          </p>
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-xl font-bold">₹{car.ratePerHour}</span>
+          <span className="text-sm text-muted-foreground">per hour</span>
+        </div>
       </div>
-      <div className="w-full md:w-3/5 p-4 space-y-2 md:pl-8">
-        <h3 className="text-xl font-bold">
-          {car.brand} {car.model}
-        </h3>
-        <p className="font-medium">
-          <DropletsIcon className="h-4 w-4 inline-block mr-1" />
+
+      <div className="flex items-center gap-2 mb-4">
+        <Badge variant="outline" className="flex items-center gap-1">
+          <DropletsIcon className="h-3 w-3" />
           {car.mileage} kmpl
-        </p>
-        <p className="text-lg font-semibold">
-          ₹{car.ratePerHour}/hr
-          <span className="text-muted-foreground text-sm">
-            {" "}
-            | ₹{car.ratePerHour * 24}
-            /day
-          </span>
-        </p>
-        <div className="flex gap-4 pt-6 justify-between max-w-sm">
-          <div className="flex flex-col items-center">
-            <GaugeIcon className="h-6 w-6 mb-1" />
-            <span className="text-xs">{car.topSpeed}</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <CogIcon className="h-6 w-6 mb-1" />
-            <span className="text-xs">{car.transmission}</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <UsersIcon className="h-6 w-6 mb-1" />
-            <span className="text-xs">{car.seats}</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <FuelIcon className="h-6 w-6 mb-1" />
-            <span className="text-xs">{car.fuelType}</span>
-          </div>
+        </Badge>
+      </div>
+
+      <Separator className="my-4" />
+
+      <div className="grid grid-cols-4 gap-4">
+        <div className="flex flex-col items-center">
+          <GaugeIcon className="h-5 w-5 text-muted-foreground mb-1" />
+          <span className="text-sm font-medium">{car.topSpeed}</span>
+          <span className="text-xs text-muted-foreground">km/h</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <CogIcon className="h-5 w-5 text-muted-foreground mb-1" />
+          <span className="text-sm font-medium">{car.transmission}</span>
+          <span className="text-xs text-muted-foreground">Trans.</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <UsersIcon className="h-5 w-5 text-muted-foreground mb-1" />
+          <span className="text-sm font-medium">{car.seats}</span>
+          <span className="text-xs text-muted-foreground">Seats</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <FuelIcon className="h-5 w-5 text-muted-foreground mb-1" />
+          <span className="text-sm font-medium">{car.fuelType}</span>
+          <span className="text-xs text-muted-foreground">Fuel</span>
         </div>
       </div>
     </CardContent>
+    <CardFooter className="p-6 pt-0">
+      <Badge variant="secondary" className="w-full justify-center py-2 text-sm">
+        Available at {branch.name} ({branch.address})
+      </Badge>
+    </CardFooter>
   </Card>
 );

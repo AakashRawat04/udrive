@@ -16,6 +16,7 @@ import { Route as SplatImport } from './routes/$'
 import { Route as IndexImport } from './routes/index'
 import { Route as UserRegisterImport } from './routes/user/register'
 import { Route as UserLoginImport } from './routes/user/login'
+import { Route as SettingsRequestsImport } from './routes/settings/requests'
 import { Route as SettingsProfileImport } from './routes/settings/profile'
 import { Route as CarCarIdImport } from './routes/car/$carId'
 import { Route as AdminDashboardImport } from './routes/admin/dashboard'
@@ -45,6 +46,11 @@ const UserRegisterRoute = UserRegisterImport.update({
 
 const UserLoginRoute = UserLoginImport.update({
   path: '/user/login',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const SettingsRequestsRoute = SettingsRequestsImport.update({
+  path: '/settings/requests',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -114,6 +120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsProfileImport
       parentRoute: typeof rootRoute
     }
+    '/settings/requests': {
+      id: '/settings/requests'
+      path: '/settings/requests'
+      fullPath: '/settings/requests'
+      preLoaderRoute: typeof SettingsRequestsImport
+      parentRoute: typeof rootRoute
+    }
     '/user/login': {
       id: '/user/login'
       path: '/user/login'
@@ -147,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/car/$carId': typeof CarCarIdRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/settings/requests': typeof SettingsRequestsRoute
   '/user/login': typeof UserLoginRoute
   '/user/register': typeof UserRegisterRoute
   '/track/car/$carId': typeof TrackCarCarIdRoute
@@ -159,6 +173,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/car/$carId': typeof CarCarIdRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/settings/requests': typeof SettingsRequestsRoute
   '/user/login': typeof UserLoginRoute
   '/user/register': typeof UserRegisterRoute
   '/track/car/$carId': typeof TrackCarCarIdRoute
@@ -172,6 +187,7 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/car/$carId': typeof CarCarIdRoute
   '/settings/profile': typeof SettingsProfileRoute
+  '/settings/requests': typeof SettingsRequestsRoute
   '/user/login': typeof UserLoginRoute
   '/user/register': typeof UserRegisterRoute
   '/track/car/$carId': typeof TrackCarCarIdRoute
@@ -186,6 +202,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/car/$carId'
     | '/settings/profile'
+    | '/settings/requests'
     | '/user/login'
     | '/user/register'
     | '/track/car/$carId'
@@ -197,6 +214,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/car/$carId'
     | '/settings/profile'
+    | '/settings/requests'
     | '/user/login'
     | '/user/register'
     | '/track/car/$carId'
@@ -208,6 +226,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/car/$carId'
     | '/settings/profile'
+    | '/settings/requests'
     | '/user/login'
     | '/user/register'
     | '/track/car/$carId'
@@ -221,6 +240,7 @@ export interface RootRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
   CarCarIdRoute: typeof CarCarIdRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
+  SettingsRequestsRoute: typeof SettingsRequestsRoute
   UserLoginRoute: typeof UserLoginRoute
   UserRegisterRoute: typeof UserRegisterRoute
   TrackCarCarIdRoute: typeof TrackCarCarIdRoute
@@ -233,6 +253,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
   CarCarIdRoute: CarCarIdRoute,
   SettingsProfileRoute: SettingsProfileRoute,
+  SettingsRequestsRoute: SettingsRequestsRoute,
   UserLoginRoute: UserLoginRoute,
   UserRegisterRoute: UserRegisterRoute,
   TrackCarCarIdRoute: TrackCarCarIdRoute,
@@ -256,6 +277,7 @@ export const routeTree = rootRoute
         "/admin/dashboard",
         "/car/$carId",
         "/settings/profile",
+        "/settings/requests",
         "/user/login",
         "/user/register",
         "/track/car/$carId"
@@ -278,6 +300,9 @@ export const routeTree = rootRoute
     },
     "/settings/profile": {
       "filePath": "settings/profile.tsx"
+    },
+    "/settings/requests": {
+      "filePath": "settings/requests.tsx"
     },
     "/user/login": {
       "filePath": "user/login.tsx"
