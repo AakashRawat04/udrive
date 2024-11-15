@@ -222,8 +222,10 @@ export const car = new Hono()
     const car = await db
       .select()
       .from(carDbSchema)
-      .where(eq(carDbSchema.id, id));
-    return c.json({ data: car });
+      .where(eq(carDbSchema.id, id))
+      .leftJoin(branchDbSchema, eq(carDbSchema.branch, branchDbSchema.id))
+      .limit(1);
+    return c.json({ data: car[0] });
   })
 
   // get all cars
@@ -241,7 +243,9 @@ export const car = new Hono()
     const cars = await db
       .select()
       .from(carDbSchema)
-      .where(eq(carDbSchema.branch, id));
+      .where(eq(carDbSchema.branch, id))
+      .leftJoin(branchDbSchema, eq(carDbSchema.branch, branchDbSchema.id));
+    console.log(cars);
     return c.json({ data: cars });
   })
 

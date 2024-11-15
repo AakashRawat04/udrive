@@ -47,10 +47,13 @@ export const CarCard = ({ car }: { car: Car }) => (
           {car.mileage} kmpl
         </p>
         <p className="text-lg font-semibold">
-          ₹{car.ratePerHour * 24}
-          <span className="text-muted-foreground text-sm">/day</span>
+          ₹{car.ratePerHour}/hr
+          <span className="text-muted-foreground text-sm">
+            {" "}
+            | ₹{car.ratePerHour * 24}
+            /day
+          </span>
         </p>
-        <p className="text-muted-foreground">{car.address}</p>
         <div className="flex gap-4 pt-6 justify-between max-w-sm">
           <div className="flex flex-col items-center">
             <GaugeIcon className="h-6 w-6 mb-1" />

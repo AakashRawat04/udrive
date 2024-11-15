@@ -19,19 +19,33 @@ import {
   StarIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Car, car } from "@/data/car";
+import { Car } from "@/data/car";
+import { api, type APIResponse } from "@/lib/api";
+import type { Branch } from "@/data/branch";
 
 export const Route = createFileRoute("/car/$carId")({
   component: BookCar,
-  loader(ctx) {
-    const { carId } = ctx.params;
-    console.log(carId);
-    return car;
-  }
+  async loader(ctx) {
+    const response = await api<APIResponse<{ car: Car; branch: Branch }>>(
+      `/car.getById/${ctx.params.carId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        method: "GET",
+      }
+    );
+
+    if (!response.data) {
+      throw new Error(response.error);
+    }
+
+    return response.data;
+  },
 });
 
 function BookCar() {
-  const car = Route.useLoaderData();
+  const { car, branch } = Route.useLoaderData();
   const todayDate = new Date();
 
   return (
@@ -46,8 +60,12 @@ function BookCar() {
           </h1>
           <div className="flex justify-between items-center mt-2">
             <span className="text-xl">
-              Rs. <span className="font-semibold">{car.ratePerHour * 24}</span>{" "}
-              /day
+              ₹{car.ratePerHour}/hr
+              <span className="text-muted-foreground text-sm">
+                {" "}
+                | ₹{car.ratePerHour * 24}
+                /day
+              </span>
             </span>
             <span className="flex items-center">
               <DropletsIcon className="mr-1" />
@@ -77,9 +95,7 @@ function BookCar() {
             </div>
           </div>
           <h2 className="text-xl font-semibold mt-4">Managed By</h2>
-          <p>{car.branch}</p>
-          <h2 className="text-xl font-semibold mt-4">Description</h2>
-          <p>{car.description}</p>
+          <p>{branch.name}</p>
           <div className="flex flex-col space-y-4 mt-4">
             <div className="flex gap-2 w-full">
               <div className="w-full">
@@ -130,11 +146,11 @@ function BookCar() {
           </div>
           <div className="flex justify-between mt-4">
             <span>Distance Included</span>
-            <span>60 KM</span>
+            <span>200 KM</span>
           </div>
           <div className="flex justify-between mt-2">
             <span>Avg Price</span>
-            <span>Rs. 123</span>
+            <span>Rs. {car.ratePerHour * 24} (24 hours)</span>
           </div>
           <Button
             variant="default"
@@ -148,76 +164,78 @@ function BookCar() {
             <div className="flex items-center gap-1 mb-2">
               <MapPin className="h-6 w-6" />
               <h2 className="text-xl font-semibold">
-                {car.address} ({car.branch})
+                {branch.address} ({branch.name})
               </h2>
             </div>
-            <APIProvider apiKey="">
-              <Map
-                center={car.coordinates}
-                zoom={14}
-                className="w-full h-full aspect-square"
-                fullscreenControl={false}
-                zoomControl={false}
-                styles={[
-                  {
-                    featureType: "all",
-                    elementType: "labels.text",
-                    stylers: [
-                      {
-                        color: "#878787",
-                      },
-                    ],
-                  },
-                  {
-                    featureType: "all",
-                    elementType: "labels.text.stroke",
-                    stylers: [
-                      {
-                        visibility: "off",
-                      },
-                    ],
-                  },
-                  {
-                    featureType: "landscape",
-                    elementType: "all",
-                    stylers: [
-                      {
-                        color: "#f9f5ed",
-                      },
-                    ],
-                  },
-                  {
-                    featureType: "road.highway",
-                    elementType: "all",
-                    stylers: [
-                      {
-                        color: "#f5f5f5",
-                      },
-                    ],
-                  },
-                  {
-                    featureType: "road.highway",
-                    elementType: "geometry.stroke",
-                    stylers: [
-                      {
-                        color: "#c9c9c9",
-                      },
-                    ],
-                  },
-                  {
-                    featureType: "water",
-                    elementType: "all",
-                    stylers: [
-                      {
-                        color: "#aee0f4",
-                      },
-                    ],
-                  },
-                ]}
-              >
-                <Marker position={car.coordinates} />
-              </Map>
-            </APIProvider>
+            <div>
+              <APIProvider apiKey="">
+                <Map
+                  // center={car.coordinates}
+                  zoom={14}
+                  className="w-full h-full aspect-square"
+                  fullscreenControl={false}
+                  zoomControl={false}
+                  styles={[
+                    {
+                      featureType: "all",
+                      elementType: "labels.text",
+                      stylers: [
+                        {
+                          color: "#878787",
+                        },
+                      ],
+                    },
+                    {
+                      featureType: "all",
+                      elementType: "labels.text.stroke",
+                      stylers: [
+                        {
+                          visibility: "off",
+                        },
+                      ],
+                    },
+                    {
+                      featureType: "landscape",
+                      elementType: "all",
+                      stylers: [
+                        {
+                          color: "#f9f5ed",
+                        },
+                      ],
+                    },
+                    {
+                      featureType: "road.highway",
+                      elementType: "all",
+                      stylers: [
+                        {
+                          color: "#f5f5f5",
+                        },
+                      ],
+                    },
+                    {
+                      featureType: "road.highway",
+                      elementType: "geometry.stroke",
+                      stylers: [
+                        {
+                          color: "#c9c9c9",
+                        },
+                      ],
+                    },
+                    {
+                      featureType: "water",
+                      elementType: "all",
+                      stylers: [
+                        {
+                          color: "#aee0f4",
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  {/* <Marker position={car.coordinates} /> */}
+                </Map>
+              </APIProvider>
+            </div>
           </div>
         </div>
       </div>

@@ -1,5 +1,3 @@
-import { FieldTypes } from "@/components/ui/autoform";
-import { fieldConfig, ZodProvider } from "@autoform/zod";
 import { z } from "zod";
 
 export const car: Car = {
@@ -21,13 +19,6 @@ export const car: Car = {
   seats: 5,
   topSpeed: 180,
   branch: "Downtown",
-  address: "123 Yonge St, Toronto, ON M5C 1W4",
-  description:
-    "The Toyota Corolla is a line of subcompact and compact cars manufactured by Toyota. Introduced in 1966, the Corolla was the best-selling car worldwide by 1974 and has been one of the best-selling cars in the world since then.",
-  coordinates: {
-    lat: 43.653225,
-    lng: -79.383186,
-  },
 };
 
 export const carSchema = z.object({
@@ -45,12 +36,6 @@ export const carSchema = z.object({
   seats: z.number(),
   topSpeed: z.number(),
   branch: z.string(),
-  address: z.string(),
-  description: z.string(),
-  coordinates: z.object({
-    lat: z.number(),
-    lng: z.number(),
-  }),
 });
 
 export const addCarSchema = z.object({
@@ -67,10 +52,6 @@ export const addCarSchema = z.object({
   transmission: z.enum(["Automatic", "Manual"]),
   seats: z.coerce.number().min(1).max(10),
   topSpeed: z.coerce.number().min(0),
-  coordinates: z.object({
-    lat: z.coerce.number().min(-90).max(90),
-    lng: z.coerce.number().min(-180).max(180),
-  }),
 });
 
 export type Car = z.infer<typeof carSchema>;

@@ -1174,32 +1174,6 @@ function CarForm({ car, onCarAdded }: { car?: Car; onCarAdded?: () => void }) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="coordinates.lat"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="lat">Latitude</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Latitude" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="coordinates.lng"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="lng">Longitude</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Longitude" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <Button
           type="submit"
           className="w-full font-semibold py-2 px-4 rounded-md mt-4"

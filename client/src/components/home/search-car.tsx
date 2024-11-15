@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Popover,
   PopoverContent,
@@ -19,19 +19,51 @@ import { format } from "date-fns/format";
 import { Calendar as CalendarIcon, CheckIcon, MapPinIcon } from "lucide-react";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { Label } from "@/components/ui/label";
-import { useParams, useSearch } from "@tanstack/react-router";
-
-const locations = [
-  { value: "new-york", label: "New York" },
-  { value: "london", label: "London" },
-  { value: "tokyo", label: "Tokyo" },
-];
+import { useQueryState } from "nuqs";
+import { api, type APIResponse } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import type { Branch } from "@/data/branch";
+import type { User } from "@/data/user";
+import { Link } from "@tanstack/react-router";
 
 export const SearchForm: React.FC = () => {
-  const [location, setLocation] = useState("");
-  const [pickupDate, setPickupDate] = useState<Date>();
-  const [dropDate, setDropDate] = useState<Date>();
+  const [location, setLocation] = useQueryState("location");
+  const [pickupDate, setPickupDate] = useQueryState<Date>("pickupDate", {
+    parse: (v) => new Date(v),
+    serialize: (v) => v.toISOString().split("T")[0],
+  });
+  const [dropDate, setDropDate] = useQueryState<Date>("dropDate", {
+    parse: (v) => new Date(v),
+    serialize: (v) => v.toISOString().split("T")[0],
+  });
   const today = new Date();
+
+  const branches = useQuery({
+    queryKey: ["branches"],
+    queryFn: async () => {
+      const branches = await api<
+        APIResponse<
+          {
+            branch: Branch;
+            user: User;
+          }[]
+        >
+      >("/branch.getAll", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!branches.data) {
+        throw new Error(branches.error);
+      }
+
+      return branches.data;
+    },
+    refetchInterval: 10000,
+  });
+
+  const canSubmit = location && pickupDate && dropDate;
 
   return (
     <form className="flex flex-col md:flex-row justify-center items-end gap-6 md:gap-4 w-full max-w-7xl mx-auto md:bg-white/90 md:py-6 md:pt-8 px-6 rounded-xl">
@@ -51,9 +83,8 @@ export const SearchForm: React.FC = () => {
             >
               <div className="flex items-center">
                 <MapPinIcon className="h-4 w-4 mr-2" />
-                {location
-                  ? locations.find((l) => l.value === location)?.label
-                  : "Select Location..."}
+                {branches.data?.find(({ branch }) => branch.id === location)
+                  ?.branch.name ?? "Select Location..."}
               </div>
               <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -64,17 +95,17 @@ export const SearchForm: React.FC = () => {
               <CommandList>
                 <CommandEmpty>No locations found.</CommandEmpty>
                 <CommandGroup>
-                  {locations.map((l) => (
+                  {branches.data?.map(({ branch }) => (
                     <CommandItem
-                      key={l.value}
-                      value={l.value}
-                      onSelect={() => setLocation(l.value)}
+                      key={branch.id}
+                      value={branch.id}
+                      onSelect={() => setLocation(branch.id)}
                     >
-                      {l.label}
+                      {branch.name}
                       <CheckIcon
                         className={cn(
                           "ml-auto h-4 w-4",
-                          location === l.value ? "opacity-100" : "opacity-0"
+                          location === branch.id ? "opacity-100" : "opacity-0"
                         )}
                       />
                     </CommandItem>
@@ -113,8 +144,15 @@ export const SearchForm: React.FC = () => {
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
-              selected={pickupDate}
-              onSelect={setPickupDate}
+              selected={pickupDate ?? undefined}
+              onSelect={(date) => {
+                if (date) {
+                  setPickupDate(date);
+                  if (!dropDate || date > dropDate) {
+                    setDropDate(date);
+                  }
+                }
+              }}
               fromDate={today}
               initialFocus
             />
@@ -142,20 +180,33 @@ export const SearchForm: React.FC = () => {
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
-              selected={dropDate}
-              onSelect={setDropDate}
-              fromDate={today}
+              selected={dropDate ?? undefined}
+              onSelect={(date) => {
+                if (date) {
+                  setDropDate(date);
+                }
+              }}
+              fromDate={pickupDate ?? today}
               initialFocus
             />
           </PopoverContent>
         </Popover>
       </div>
       <Button
-        type="submit"
-        disabled
+        disabled={!canSubmit}
         className="w-full max-w-xs px-3 py-5 rounded-lg md:bg-black md:hover:bg-black/90 text-white"
+        asChild
       >
-        Find A Vehicle
+        <Link
+          to="/search"
+          search={{
+            location,
+            pickupDate: pickupDate?.toISOString().split("T")[0],
+            dropDate: dropDate?.toISOString().split("T")[0],
+          }}
+        >
+          Find A Vehicle
+        </Link>
       </Button>
     </form>
   );
