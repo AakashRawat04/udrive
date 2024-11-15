@@ -1,19 +1,20 @@
 import { ZodProvider } from "@autoform/zod";
 import { z } from "zod";
 
-export const user: User = {
-  id: "1",
-  name: "John Doe",
-  email: "heyjatinn@gmail.com",
-  role: "super_admin",
-}
-
 export const userSchema = z.object({
-  id: z.string(),
-  name: z.string(),
+  id: z.string().uuid(),
+  name: z.string().max(255),
   email: z.string().email(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  pincode: z.string().optional(),
+  password: z.string(),
   role: z.enum(["user", "admin", "super_admin"]),
-})
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
 
 export const newUserSchema = z.object({
   name: z.string(),

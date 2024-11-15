@@ -8,7 +8,7 @@ import {
 	loginSchema,
 	registerSchema,
 } from "../../schema/auth";
-import { userDbSchema } from "../../schema/user";
+import { insertUserSchema, userDbSchema } from "../../schema/user";
 import { userTypes } from "../../utils/constants";
 import { db } from "../../utils/db";
 
@@ -77,6 +77,19 @@ export const auth = new Hono()
 		}
 
 		return c.json({ data: response[0] });
+	})
+
+	.put("/user.update", vValidator("json", insertUserSchema), jwt({ secret: process.env.JWT_SECRET! }), async (c) => {
+		const payload = c.get("jwtPayload") as { email: string; role: string };
+
+		const body = c.req.valid("json");
+
+		const response = await db
+			.update(userDbSchema)
+			.set(body)
+			.where(eq(userDbSchema.email, payload.email));
+
+		return c.json({ data: response });
 	})
 
 	// route for super admins only to create admin users
