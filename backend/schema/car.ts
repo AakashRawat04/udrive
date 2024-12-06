@@ -54,24 +54,28 @@ export const carRequestDbSchema = pgTable("car_request", {
 	from: timestamp("from").notNull(),
 	to: timestamp("to").notNull(),
 	status: carRequestStatusEnum("status").notNull(),
+	startTime: timestamp("start_time"),
+	endTime: timestamp("end_time"),
+	bill: numeric("bill"),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const carJourneyDbSchema = pgTable("car_journey", {
-	id: uuid("id").notNull().primaryKey().defaultRandom(),
-	car: uuid("car")
-		.references(() => carDbSchema.id)
-		.notNull(),
-	user: uuid("user")
-		.references(() => userDbSchema.id)
-		.notNull(),
-	startTime: timestamp("start_time").notNull(),
-	endTime: timestamp("end_time"),
-	finalPrice: numeric("final_price"),
-	createdAt: timestamp("created_at").notNull().defaultNow(),
-	updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+// export const carJourneyDbSchema = pgTable("car_journey", {
+// 	id: uuid("id").notNull().primaryKey().defaultRandom(),
+// 	car: uuid("car")
+// 		.references(() => carDbSchema.id)
+// 		.notNull(),
+// 	user: uuid("user")
+// 		.references(() => userDbSchema.id)
+// 		.notNull(),
+// 	startTime: timestamp("start_time").notNull(),
+// 	isCancled: boolean("is_cancled").notNull().default(false),
+// 	endTime: timestamp("end_time"),
+// 	finalPrice: numeric("final_price"),
+// 	createdAt: timestamp("created_at").notNull().defaultNow(),
+// 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
+// });
 
 export const carSchema = v.object({
 	brand: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
@@ -110,19 +114,20 @@ export const carRequestSchema = v.object({
 
 export const updateCarRequestSchema = v.object({
 	id: v.pipe(v.string(), v.uuid()),
-	car: v.pipe(v.string(), v.uuid()),
 	status: v.pipe(v.string(), v.picklist(Object.values(carRequestStatus))),
 });
 
 export const startCarJourneySchema = v.object({
-	car: v.pipe(v.string(), v.uuid()),
-	user: v.pipe(v.string(), v.uuid()),
-	startTime: v.pipe(v.string(), v.isoDate()),
+	carRequestId: v.pipe(v.string(), v.uuid()),
 });
 
 export const endCarJourneySchema = v.object({
+	carRequestId: v.pipe(v.string(), v.uuid()),
+	bill: v.number(),
+});
+
+export const cancelCarJourneySchema = v.object({
 	id: v.pipe(v.string(), v.uuid()),
-	endTime: v.pipe(v.string(), v.isoDate()),
 });
 
 export const updateCarJourneySchema = v.object({

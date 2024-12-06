@@ -1,0 +1,19 @@
+meta {
+  name: update car request
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{BASE_URL}}/api/car.request.update
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": "5dbeaf30-6a29-4ded-acf2-26d2616d1cef",
+    "status": "approved"
+  }
+  
+}

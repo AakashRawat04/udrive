@@ -152,8 +152,31 @@ export const carRequest = new Hono()
 		return c.json({ data: response[0] });
 	})
 
-	// list all car requests by user id
+	// list all car requests
 	.get("/car.request.list", async (c) => {
+		const user = c.get("jwtPayload");
+		console.log(user);
+
+		// check if user is admin
+		if (user.role !== userTypes.SUPER_ADMIN && user.role !== userTypes.ADMIN) {
+			return c.json({ error: "Unauthorized" });
+		}
+
+		// fetch all car requests with either pending, or rejected status
+		const response = await db
+			.select()
+			.from(carRequestDbSchema)
+			.where(eq(carRequestDbSchema.status, carRequestStatus.PENDING))
+			.leftJoin(userDbSchema, eq(carRequestDbSchema.user, userDbSchema.id))
+			.leftJoin(carDbSchema, eq(carRequestDbSchema.car, carDbSchema.id));
+
+		console.log(response);
+
+		return c.json({ data: response });
+	})
+
+	// list all car requests by user id
+	.get("/car.request.listByUser", async (c) => {
 		const user = c.get("jwtPayload");
 		console.log(user);
 
@@ -279,7 +302,10 @@ export const carRequest = new Hono()
 			console.log(body);
 
 			// check if user is admin
-			if (user.role !== userTypes.ADMIN) {
+			if (
+				user.role !== userTypes.ADMIN &&
+				user.role !== userTypes.SUPER_ADMIN
+			) {
 				return c.json({ error: "Unauthorized" });
 			}
 

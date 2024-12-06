@@ -8,4 +8,7 @@ export const carRequestStatus = {
 	PENDING: "pending",
 	APPROVED: "approved",
 	REJECTED: "rejected",
+	CANCELLED: "cancelled",
+	STARTED: "started",
+	COMPLETED: "completed",
 };

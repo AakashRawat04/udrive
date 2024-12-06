@@ -1,0 +1,19 @@
+meta {
+  name: car journey end
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{BASE_URL}}/api/car.journey.end
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "carRequestId": "5dbeaf30-6a29-4ded-acf2-26d2616d1cef",
+    "bill": 100
+  }
+  
+}
