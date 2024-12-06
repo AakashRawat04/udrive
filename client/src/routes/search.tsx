@@ -72,7 +72,7 @@ function SearchPage() {
           </p>
         </div>
       ) : (
-        <div className="mt-4 grid grid-cols-3">
+        <div className="mt-4 grid grid-cols-3 gap-4">
           {carSearch.data?.map(({ car }) => (
             <Link
               to="/car/$carId"
