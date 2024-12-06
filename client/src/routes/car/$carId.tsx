@@ -24,7 +24,6 @@ import {
   GaugeIcon,
   Loader2,
   MapPin,
-  StarIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Car } from "@/data/car";
@@ -84,8 +83,8 @@ function BookCar() {
         },
         body: JSON.stringify({
           car: carId,
-          from: `${pickupDate?.getFullYear()}-${pickupDate?.getMonth()}-${pickupDate?.getDate()}`,
-          to: `${dropDate?.getFullYear()}-${dropDate?.getMonth()}-${dropDate?.getDate()}`,
+          from: `${pickupDate?.getFullYear()}-${pickupDate?.getMonth()}-${pickupDate?.getDate().toString().padStart(2, "0")}`,
+          to: `${dropDate?.getFullYear()}-${dropDate?.getMonth()}-${dropDate?.getDate().toString().padStart(2, "0")}`,
         }),
       });
 
