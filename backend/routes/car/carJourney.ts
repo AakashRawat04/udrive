@@ -104,7 +104,7 @@ export const carJourney = new Hono()
 				.where(and(eq(carRequestDbSchema.id, body.carRequestId)));
 
 			console.log("carJourneyStartResponse", carRequestUpdateResponse);
-			return c.json({ message: "Car journey started" });
+			c.json({ data: "Car journey started" });
 		}
 	)
 
@@ -155,6 +155,7 @@ export const carJourney = new Hono()
 				.set({
 					endTime: new Date(),
 					bill: body.bill.toString(),
+					status: carRequestStatus.COMPLETED,
 				})
 				.where(
 					and(
@@ -164,7 +165,7 @@ export const carJourney = new Hono()
 				);
 
 			console.log("carJourneyEndResponse", carJourneyEndResponse);
-			return c.json({ message: "Car journey ended" });
+			return c.json({ data: "Car journey ended" });
 		}
 	)
 
@@ -223,7 +224,7 @@ export const carJourney = new Hono()
 				);
 
 			console.log("carJourneyCancelResponse", carJourneyCancelResponse);
-			return c.json({ message: "Car journey cancelled" });
+			c.json({ data: "Car journey cancelled" });
 		}
 	)
 
@@ -333,7 +334,7 @@ export const carJourney = new Hono()
 				.where(eq(carRequestDbSchema.id, body.id));
 
 			console.log("carJourneyUpdateResponse", carJourneyUpdateResponse);
-			return c.json({ message: "Car journey updated" });
+			c.json({ data: "Car journey updated" });
 		}
 	)
 
@@ -365,7 +366,7 @@ export const carJourney = new Hono()
 			.where(eq(carRequestDbSchema.id, carJourneyId));
 
 		console.log("carJourneyDeleteResponse", carJourneyDeleteResponse);
-		return c.json({ message: "Car journey deleted" });
+		c.json({ data: "Car journey deleted" });
 	})
 
 	// upcomming car journey from car request table
@@ -430,7 +431,7 @@ export const carJourney = new Hono()
 		console.log(user);
 
 		// check if user is user
-		if (user.role !== userTypes.ADMIN && user.role !== userTypes.USER) {
+		if (user.role !== userTypes.ADMIN && user.role !== userTypes.SUPER_ADMIN) {
 			return c.json({ error: "Unauthorized" });
 		}
 
@@ -485,7 +486,7 @@ export const carJourney = new Hono()
 		console.log(user);
 
 		// check if user is user
-		if (user.role !== userTypes.ADMIN && user.role !== userTypes.USER) {
+		if (user.role !== userTypes.ADMIN && user.role !== userTypes.SUPER_ADMIN) {
 			return c.json({ error: "Unauthorized" });
 		}
 
@@ -541,7 +542,7 @@ export const carJourney = new Hono()
 		console.log(user);
 
 		// check if user is user
-		if (user.role !== userTypes.ADMIN && user.role !== userTypes.USER) {
+		if (user.role !== userTypes.ADMIN && user.role !== userTypes.SUPER_ADMIN) {
 			return c.json({ error: "Unauthorized" });
 		}
 

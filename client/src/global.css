@@ -67,6 +67,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  input[type="number"].remove-spin::-webkit-inner-spin-button,
+  input[type="number"].remove-spin::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 html, body {

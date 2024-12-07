@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+export const enum RequestStatus {
+  Pending = "pending",
+  Approved = "approved",
+  Rejected = "rejected",
+  Cancelled = "cancelled",
+  Started = "started",
+  Completed = "completed",
+}
+
 export const carRequestSchema = z.object({
   id: z.string().uuid(),
   branch: z.string().uuid(),
@@ -7,7 +16,10 @@ export const carRequestSchema = z.object({
   user: z.string().uuid(),
   from: z.date(),
   to: z.date(),
-  status: z.enum(["pending", "approved", "rejected"]), // Assuming these are the possible statuses
+  startTime: z.date().optional(),
+  status: z.enum(["pending", "approved", "rejected", "cancelled", "started", "completed"]),
+  endTime: z.date().optional(),
+  bill: z.number().optional(),
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().default(() => new Date()),
 });

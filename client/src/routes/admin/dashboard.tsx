@@ -24,7 +24,7 @@ import {
   RefreshCcw,
   Trash2,
 } from "lucide-react";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { AutoForm } from "@/components/ui/autoform";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -40,7 +40,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { PopoverClose } from "@radix-ui/react-popover";
-import { useState } from "react";
 import { type Branch } from "@/data/branch";
 import { useAuth } from "@/providers/AuthProvider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -56,10 +55,442 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { FetchError } from "ofetch";
+import { CarRequest, RequestStatus } from "@/data/request";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
 });
+
+function Booking({
+  booking,
+}: {
+  booking: { user: User; car: Car; car_request: CarRequest };
+}) {
+  const { user, car, car_request } = booking;
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogAction, setDialogAction] = useState<null | (() => void)>(null);
+  const [completeRideDialogOpen, setCompleteRideDialogOpen] = useState(false);
+  const router = useRouter();
+
+  const queryClient = useQueryClient();
+
+  const startCarRequestMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api<APIResponse<string>>(`/car.journey.start`, {
+        body: {
+          carRequestId: car_request.id,
+        },
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      toast.success("Car journey started successfully");
+    },
+    onError: (error) => {
+      if (error instanceof FetchError) {
+        toast.error(error.data.error ?? "An error occured");
+        return;
+      }
+      toast.error(error.message ?? "An error occurred");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["bookingRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["completedRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["cancelledRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["upcomingRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["ongoingRequests"],
+      });
+    },
+  });
+
+  const updateCarRequestMutation = useMutation({
+    mutationFn: async (status: RequestStatus) => {
+      const response = await api<APIResponse<string>>(`/car.request.update`, {
+        body: {
+          id: car_request.id,
+          status,
+        },
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      toast.success("Car request updated successfully");
+    },
+    onError: (error) => {
+      if (error instanceof FetchError) {
+        toast.error(error.data.error ?? "An error occured");
+        return;
+      }
+      toast.error(error.message ?? "An error occurred");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["bookingRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["completedRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["cancelledRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["upcomingRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["ongoingRequests"],
+      });
+    },
+  });
+
+  const handleDialogConfirm = () => {
+    if (dialogAction) {
+      dialogAction();
+      setDialogAction(null);
+    }
+  };
+
+  const renderActions = () => {
+    switch (car_request.status) {
+      case "pending":
+        return (
+          <>
+            <DialogTrigger asChild>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  setDialogAction(
+                    () => () =>
+                      updateCarRequestMutation.mutate(RequestStatus.Approved)
+                  );
+                }}
+              >
+                Approve
+              </Button>
+            </DialogTrigger>
+            <DialogTrigger asChild>
+              <Button
+                className="w-full"
+                variant="destructive"
+                onClick={() => {
+                  setDialogAction(
+                    () => () =>
+                      updateCarRequestMutation.mutate(RequestStatus.Rejected)
+                  );
+                }}
+              >
+                Reject
+              </Button>
+            </DialogTrigger>
+          </>
+        );
+      case "approved":
+        return (
+          <>
+            <DialogTrigger asChild>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  setDialogAction(() => () => startCarRequestMutation.mutate());
+                }}
+              >
+                Start Ride
+              </Button>
+            </DialogTrigger>
+            <DialogTrigger asChild>
+              <Button
+                className="w-full"
+                variant="destructive"
+                onClick={() => {
+                  setDialogAction(
+                    () => () =>
+                      updateCarRequestMutation.mutate(RequestStatus.Cancelled)
+                  );
+                }}
+              >
+                Cancel
+              </Button>
+            </DialogTrigger>
+          </>
+        );
+      case "cancelled":
+      case "rejected":
+        return (
+          // This booking has been cancelled
+          <Button className="w-full" variant="secondary" disabled>
+            Cancelled
+          </Button>
+        );
+      case "completed":
+        return (
+          // This booking has been completed
+          <Button className="w-full" variant="secondary" disabled>
+            Rs. {car_request.bill}
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const rideCompletionMutation = useMutation({
+    mutationFn: async (bill: number) => {
+      const response = await api<APIResponse<string>>(`/car.journey.end`, {
+        body: {
+          carRequestId: car_request.id,
+          bill,
+        },
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      toast.success("Ride completed successfully");
+    },
+    onError: (error) => {
+      if (error instanceof FetchError) {
+        toast.error(error.data.error ?? "An error occured");
+        return;
+      }
+      toast.error(error.message ?? "An error occurred");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["bookingRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["completedRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["cancelledRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["upcomingRequests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["ongoingRequests"],
+      });
+    },
+  });
+
+  const handleRideCompletion = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const bill = Number(formData.get("bill"));
+
+    await rideCompletionMutation.mutateAsync(bill);
+    setCompleteRideDialogOpen(false);
+  };
+
+  return (
+    <Card>
+      <CardContent className="flex flex-col md:flex-row items-center md:space-x-4 pt-4">
+        <div className="flex items-center space-x-4 w-full">
+          <div className="px-4">
+            <div>
+              <h2 className="text-xl font-semibold">{user.name}</h2>
+              <p className="text-gray-600">{user.email}</p>
+              <a href={`tel:${user.phone}`} className="text-gray-600">
+                {user.phone}
+              </a>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="mt-2" asChild>
+                <a href={user.panCard} target="_blank" rel="noreferrer">
+                  View Pan Card
+                </a>
+              </Button>
+              <Button variant="outline" className="mt-2" asChild>
+                <a href={user.drivingLicense} target="_blank" rel="noreferrer">
+                  View License
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
+        <hr className="border-r border-gray-300 my-2 md:my-0 w-full h-[1px] md:w-[1px] md:h-28" />
+        <div className="w-full">
+          <h1 className="text-gray-700">
+            {car.brand} {car.model}
+          </h1>
+          <p className="text-2xl font-semibold">{car.regNo}</p>
+          <Button variant="outline" className="mt-2" asChild>
+            <Link
+              to="/car/$carId"
+              params={{
+                carId: car.id,
+              }}
+            >
+              View Car
+            </Link>
+          </Button>
+        </div>
+        <hr className="border-r border-gray-300 w-full my-2 md:my-0 h-[1px] md:w-[1px] md:h-28" />
+        <div className="flex flex-col gap-2 w-full">
+          <div className="flex flex-col md:flex-row gap-2 w-full">
+            <div className="w-full flex flex-col gap-2">
+              <Label
+                htmlFor="pickupDate"
+                className="text-muted-foreground font-normal"
+              >
+                Pick up date
+              </Label>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full max-w-sm justify-start text-left font-normal px-3 py-5 rounded-lg disabled:pointer-events-none"
+                )}
+              >
+                {/* @ts-ignore */}
+                {format(
+                  car_request.from,
+                  car_request.status === "completed"
+                    ? "hh:mm a, P"
+                    : "PPP"
+                )}
+                <CalendarIcon className="ml-auto h-4 w-4" />
+              </Button>
+            </div>
+            <div className="w-full flex flex-col gap-2">
+              <Label
+                htmlFor="dropDate"
+                className="text-muted-foreground font-normal"
+              >
+                Drop off date
+              </Label>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full max-w-sm justify-start text-left font-normal px-3 py-5 rounded-lg disabled:pointer-events-none"
+                )}
+              >
+                {/* @ts-ignore */}
+                {format(
+                  car_request.to,
+                  car_request.status === "completed"
+                    ? "hh:mm a, P"
+                    : "PPP"
+                )}
+                <CalendarIcon className="ml-auto h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-between">
+            {car_request.status === "started" && (
+              <>
+                <Dialog
+                  open={completeRideDialogOpen}
+                  onOpenChange={setCompleteRideDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button variant="destructive" className="w-full">
+                      End Ride
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="p-6 bg-white rounded-lg shadow-lg gap-0">
+                    <h2 className="text-lg font-semibold mb-4">Billing</h2>
+                    <p className="text-gray-600 mb-1">
+                      Please enter the bill amount for this ride
+                    </p>
+                    <form
+                      className="flex flex-col gap-4"
+                      onSubmit={handleRideCompletion}
+                    >
+                      <Input
+                        type="number"
+                        name="bill"
+                        placeholder="Enter bill amount"
+                        className="rounded-xl h-auto focus-visible:ring-0 outline-none p-2 text-5xl md:text-5xl font-bold shadow-none border-x-0 border-t-0 border-b remove-spin"
+                        min={0}
+                        required
+                      />
+                      <div className="flex gap-4 justify-end">
+                        <Button
+                          variant="secondary"
+                          onClick={() => setCompleteRideDialogOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          className="bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-800"
+                          type="submit"
+                        >
+                          Confirm
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+                <Button
+                  disabled
+                  className="w-full select-none"
+                  variant="secondary"
+                  onClick={() => {
+                    router.navigate({
+                      to: "/car/$carId",
+                      params: {
+                        carId: car.id,
+                      },
+                    });
+                  }}
+                >
+                  Track Car <ArrowRight className="ml-2" />
+                </Button>
+              </>
+            )}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              {renderActions()}
+              <DialogContent>
+                <h2 className="text-lg font-semibold">Confirm Action</h2>
+                <p className="text-gray-600">
+                  Are you sure you want to proceed with this action?
+                </p>
+                <div className="flex gap-2 mt-4">
+                  <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      handleDialogConfirm();
+                      setDialogOpen(false);
+                    }}
+                  >
+                    Confirm
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function CustomDrawer({
   title,
@@ -729,7 +1160,15 @@ async function addNewAdmin(admin: NewUser) {
   }
 }
 
-function CarForm({ car, branch, onCarAdded }: { car?: Car, branch?: Branch; onCarAdded?: () => void }) {
+function CarForm({
+  car,
+  branch,
+  onCarAdded,
+}: {
+  car?: Car;
+  branch?: Branch;
+  onCarAdded?: () => void;
+}) {
   const queryClient = useQueryClient();
   const branches = queryClient.getQueryData<{ branch: Branch; user: User }[]>([
     "branches",
@@ -738,10 +1177,10 @@ function CarForm({ car, branch, onCarAdded }: { car?: Car, branch?: Branch; onCa
   const branchNames = branches?.map((branch) => branch.branch.name) ?? [];
 
   if (car) {
-    console.log("gegre", car)
+    console.log("gegre", car);
     const carBranch = branches?.find((data) => data.branch.id === branch?.id);
     if (carBranch) {
-      car.branch = carBranch.branch.name
+      car.branch = carBranch.branch.name;
     }
   }
 
@@ -1333,6 +1772,138 @@ function Dashboard() {
     enabled: auth.user?.role === "super_admin",
   });
 
+  const bookingRequestsQuery = useQuery({
+    queryFn: async () => {
+      const response = await api<
+        APIResponse<
+          {
+            user: User;
+            car: Car;
+            car_request: CarRequest;
+          }[]
+        >
+      >("/car.request.list", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      return response.data;
+    },
+    queryKey: ["bookingRequests"],
+    refetchInterval: 10000,
+  });
+
+  const cancelledBookingRequestsQuery = useQuery({
+    queryFn: async () => {
+      const response = await api<
+        APIResponse<
+          {
+            user: User;
+            car: Car;
+            car_request: CarRequest;
+          }[]
+        >
+      >("/car.booking.cancelled", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      console.log(response.data);
+
+      return response.data;
+    },
+    queryKey: ["cancelledBookings"],
+    refetchInterval: 10000,
+  });
+
+  const completedBookingRequestsQuery = useQuery({
+    queryFn: async () => {
+      const response = await api<
+        APIResponse<
+          {
+            user: User;
+            car: Car;
+            car_request: CarRequest;
+          }[]
+        >
+      >("/car.booking.completed", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      return response.data;
+    },
+    queryKey: ["completedBookings"],
+    refetchInterval: 10000,
+  });
+
+  const upcommingBookingRequestsQuery = useQuery({
+    queryFn: async () => {
+      const response = await api<
+        APIResponse<
+          {
+            user: User;
+            car: Car;
+            car_request: CarRequest;
+          }[]
+        >
+      >("/car.booking.upcomming", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      return response.data;
+    },
+    queryKey: ["upcommingBookings"],
+    refetchInterval: 10000,
+  });
+
+  const ongoingBookingRequestsQuery = useQuery({
+    queryFn: async () => {
+      const response = await api<
+        APIResponse<
+          {
+            user: User;
+            car: Car;
+            car_request: CarRequest;
+          }[]
+        >
+      >("/car.booking.ongoing", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      return response.data;
+    },
+    queryKey: ["ongoingBookings"],
+    refetchInterval: 10000,
+  });
+
   if (auth.user?.role === "user") {
     router.navigate({
       to: "/",
@@ -1551,8 +2122,11 @@ function Dashboard() {
           </CustomDrawer>
         </div>
       )}
-      <Tabs defaultValue="upcoming" className="w-full mt-4">
+      <Tabs defaultValue="request" className="w-full mt-4">
         <TabsList className="mb-2 flex flex-col md:flex-row h-full w-full md:w-max justify-start">
+          <TabsTrigger value="request" className="text-lg font-semibold w-full">
+            Booking Requests
+          </TabsTrigger>
           <TabsTrigger
             value="upcoming"
             className="text-lg font-semibold w-full"
@@ -1562,140 +2136,70 @@ function Dashboard() {
           <TabsTrigger value="ongoing" className="text-lg font-semibold w-full">
             On-going Bookings
           </TabsTrigger>
-          <TabsTrigger value="request" className="text-lg font-semibold w-full">
-            Booking Requests
+          <TabsTrigger
+            value="completed"
+            className="text-lg font-semibold w-full"
+          >
+            Completed Bookings
+          </TabsTrigger>
+          <TabsTrigger
+            value="cancelled"
+            className="text-lg font-semibold w-full"
+          >
+            Cancelled Bookings
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="upcoming" className="space-y-4">
-          {new Array(5).fill(0).map((_, i) => (
-            <div className="relative" key={i}>
+        <TabsContent value="request" className="space-y-4">
+          {bookingRequestsQuery.data?.map((booking, index) => (
+            <div className="relative" key={booking.car_request.id}>
               <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
-                {i + 1}.
+                {index + 1}.
               </h2>
-              <Booking />
+              <Booking booking={booking} />
+            </div>
+          ))}
+        </TabsContent>
+        <TabsContent value="upcoming" className="space-y-4">
+          {upcommingBookingRequestsQuery.data?.map((booking, index) => (
+            <div className="relative" key={booking.car_request.id}>
+              <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
+                {index + 1}.
+              </h2>
+              <Booking booking={booking} />
             </div>
           ))}
         </TabsContent>
         <TabsContent value="ongoing" className="space-y-4">
-          {new Array(5).fill(0).map((_, i) => (
-            <div className="relative" key={i}>
+          {ongoingBookingRequestsQuery.data?.map((booking, index) => (
+            <div className="relative" key={booking.car_request.id}>
               <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
-                {i + 1}.
+                {index + 1}.
               </h2>
-              <Booking />
+              <Booking booking={booking} />
             </div>
           ))}
         </TabsContent>
-        <TabsContent value="request" className="space-y-4">
-          {new Array(5).fill(0).map((_, i) => (
-            <div className="relative" key={i}>
+        <TabsContent value="completed" className="space-y-4">
+          {completedBookingRequestsQuery.data?.map((booking, index) => (
+            <div className="relative" key={booking.car_request.id}>
               <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
-                {i + 1}.
+                {index + 1}.
               </h2>
-              <Booking />
+              <Booking booking={booking} />
+            </div>
+          ))}
+        </TabsContent>
+        <TabsContent value="cancelled" className="space-y-4">
+          {cancelledBookingRequestsQuery.data?.map((booking, index) => (
+            <div className="relative" key={booking.car_request.id}>
+              <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
+                {index + 1}.
+              </h2>
+              <Booking booking={booking} />
             </div>
           ))}
         </TabsContent>
       </Tabs>
     </div>
-  );
-}
-
-function Booking() {
-  return (
-    <Card>
-      <CardContent className="flex flex-col md:flex-row items-center md:space-x-4 pt-4">
-        <div className="flex items-center space-x-4 w-full">
-          <img
-            src="https://randomuser.me/api/portraits/women/68.jpg"
-            alt="User Avatar"
-            className="w-16 h-16 rounded-full"
-          />
-          <div>
-            <h2 className="text-xl font-semibold">John Doe</h2>
-            <p className="text-gray-600">john.doe@example.com</p>
-            <p className="text-gray-600">(123) 456-7890</p>
-          </div>
-        </div>
-        <hr className="border-r border-gray-300 my-2 md:my-0 w-full h-[1px] md:w-[1px] md:h-28" />
-        <div className="w-full">
-          <h1 className="text-gray-700">
-            {car.brand} {car.model}
-          </h1>
-          <p className="text-2xl font-semibold">{car.regNo}</p>
-        </div>
-        <hr className="border-r border-gray-300 w-full my-2 md:my-0 h-[1px] md:w-[1px] md:h-28" />
-        <div className="flex flex-col gap-2 w-full">
-          <div className="flex flex-col md:flex-row gap-2 w-full">
-            <div className="w-full flex flex-col gap-2">
-              <Label
-                htmlFor="dropDate"
-                className="text-muted-foreground font-normal"
-              >
-                Pick up date
-              </Label>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full max-w-sm justify-start text-left font-normal px-3 py-5 rounded-lg disabled:pointer-events-none"
-                )}
-              >
-                {/* @ts-ignore */}
-                {format(new Date(), "PPP")}
-                <CalendarIcon className="ml-auto h-4 w-4" />
-              </Button>
-            </div>
-            <div className="w-full flex flex-col gap-2">
-              <Label
-                htmlFor="dropDate"
-                className="text-muted-foreground font-normal"
-              >
-                Drop off date
-              </Label>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full max-w-sm justify-start text-left font-normal px-3 py-5 rounded-lg disabled:pointer-events-none"
-                )}
-              >
-                {/* @ts-ignore */}
-                {format(new Date(), "PPP")}
-                <CalendarIcon className="ml-auto h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          <div className="flex gap-2 justify-between">
-            <Button
-              className="w-full bg-black hover:bg-black/90 text-white font-semibold py-2 px-4 rounded-md"
-              size="lg"
-              asChild
-            >
-              <Link
-                to="/track/car/$carId"
-                params={{
-                  carId: car.id,
-                }}
-              >
-                Track Car <ArrowRight className="ml-2" />
-              </Link>
-            </Button>
-            <Button
-              className="w-full font-semibold py-2 px-4 rounded-md"
-              size="lg"
-              asChild
-            >
-              <Link
-                to="/track/car/$carId"
-                params={{
-                  carId: car.id,
-                }}
-              >
-                Complete Ride
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
