@@ -4,6 +4,7 @@ import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { Toaster } from "sonner";
 import { AuthProvider, getUser } from "@/providers/AuthProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { hasCompletedOnboarding } from "@/data/user";
 
 const whiteList = ["/user/login", "/user/register", "/"];
 
@@ -28,6 +29,12 @@ export const Route = createRootRoute({
       }
 
       return;
+    } else {
+      if (user && ctx.location.pathname !== '/settings/profile' && !hasCompletedOnboarding(user)) {
+        throw redirect({
+          to: "/settings/profile",
+        });
+      }
     }
 
     if (!user) {
@@ -52,5 +59,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-
-

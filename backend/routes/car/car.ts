@@ -35,13 +35,7 @@ export const car = new Hono()
   )
 
   .post("/image.upload", vValidator("form", imageUploadSchema), async (c) => {
-    const user = c.get("jwtPayload");
     const body = c.req.valid("form");
-
-    // check if user is super admin
-    if (user.role !== userTypes.SUPER_ADMIN) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
 
     try {
       const file = body.image;
@@ -70,13 +64,7 @@ export const car = new Hono()
   })
 
   .delete("/image.delete/:key", async (c) => {
-    const user = c.get("jwtPayload");
     const key = c.req.param("key");
-
-    // check if user is super admin
-    if (user.role !== userTypes.SUPER_ADMIN) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
 
     try {
       const command = new DeleteObjectCommand({

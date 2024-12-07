@@ -185,7 +185,7 @@ function OneBranch({ branch, user }: { branch: Branch; user: User }) {
     },
     onError: (error) => {
       if (error instanceof FetchError) {
-        toast.error(error.data.error);
+        toast.error(error.data.error ?? "An error occured");
         return;
       }
       toast.error(error.message);
@@ -431,7 +431,7 @@ function OneUser({ user }: { user: User }) {
     },
     onError: (error) => {
       if (error instanceof FetchError) {
-        toast.error(error.data.error);
+        toast.error(error.data.error ?? "An error occured");
         return;
       }
       toast.error(error.message);
@@ -605,7 +605,7 @@ function OneCar({ car, branch }: { car: Car; branch: Branch }) {
     },
     onError: (error) => {
       if (error instanceof FetchError) {
-        toast.error(error.data.error);
+        toast.error(error.data.error ?? "An error occured");
         return;
       }
       toast.error(error.message);
@@ -776,7 +776,7 @@ function CarForm({ car, branch, onCarAdded }: { car?: Car, branch?: Branch; onCa
     },
     onError: (error) => {
       if (error instanceof FetchError) {
-        toast.error(error.data.error);
+        toast.error(error.data.error ?? "An error occured");
         return;
       }
       toast.error(error.message ?? "An error occurred");
@@ -863,7 +863,7 @@ function CarForm({ car, branch, onCarAdded }: { car?: Car, branch?: Branch; onCa
     },
     onError: (error) => {
       if (error instanceof FetchError) {
-        toast.error(error.data.error);
+        toast.error(error.data.error ?? "An error occured");
         return;
       }
       toast.error(error.message ?? "An error occurred");

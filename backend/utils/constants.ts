@@ -4,6 +4,11 @@ export const userTypes = {
 	USER: "user",
 } as const;
 
+export const userStatus = {
+	VERIFIED: "verified",
+	UNVERIFIED: "unverified",
+} as const;
+
 export const carRequestStatus = {
 	PENDING: "pending",
 	APPROVED: "approved",

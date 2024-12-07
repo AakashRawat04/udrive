@@ -9,7 +9,8 @@ export const userSchema = z.object({
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
-  pincode: z.string().optional(),
+  panCard: z.string().optional(),
+  drivingLicense: z.string().optional(),
   password: z.string(),
   role: z.enum(["user", "admin", "super_admin"]),
   createdAt: z.string().datetime(),
@@ -33,3 +34,7 @@ export const editUserFormSchema = new ZodProvider(editUserSchema);
 export type User = z.infer<typeof userSchema>;
 export type NewUser = z.infer<typeof newUserSchema>;
 export type EditUser = z.infer<typeof editUserSchema>;
+
+export const hasCompletedOnboarding = (user: User) => {
+  return user.name && user.phone && user.address && user.city && user.state && user.panCard && user.drivingLicense;
+}
