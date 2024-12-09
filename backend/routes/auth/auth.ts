@@ -132,7 +132,7 @@ export const auth = new Hono()
     if (response.length === 0) {
       await db.insert(userDbSchema).values({
         email: body.email,
-        otp,
+        otp: String(otp),
         status: userStatus.UNVERIFIED,
       });
     } else {
@@ -143,7 +143,7 @@ export const auth = new Hono()
       await db
         .update(userDbSchema)
         .set({
-          otp,
+          otp: String(otp),
           status: userStatus.UNVERIFIED,
         })
         .where(eq(userDbSchema.email, body.email));
