@@ -38,7 +38,7 @@ function Requests() {
 
       return requests.data;
     },
-    refetchInterval: 10000,
+
   });
 
   const carRequests = requests.data;

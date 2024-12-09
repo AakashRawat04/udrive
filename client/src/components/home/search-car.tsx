@@ -66,7 +66,7 @@ export const SearchForm: React.FC = () => {
 
       return branches.data;
     },
-    refetchInterval: 10000,
+
   });
 
   const canSubmit = location && pickupDate && dropDate;

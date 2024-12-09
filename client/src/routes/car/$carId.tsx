@@ -71,7 +71,7 @@ function BookCar() {
 
       return response.data;
     },
-    refetchInterval: 10000,
+
   });
 
   const handleBookNow = useMutation({

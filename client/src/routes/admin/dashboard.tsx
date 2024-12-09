@@ -1,9 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Drawer } from "vaul";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { car, addCarSchema, type Car } from "@/data/car";
+import { addCarSchema, type Car } from "@/data/car";
 import { cn } from "@/lib/classes";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -370,9 +376,7 @@ function Booking({
                 {/* @ts-ignore */}
                 {format(
                   car_request.from,
-                  car_request.status === "completed"
-                    ? "hh:mm a, P"
-                    : "PPP"
+                  car_request.status === "completed" ? "hh:mm a, P" : "PPP"
                 )}
                 <CalendarIcon className="ml-auto h-4 w-4" />
               </Button>
@@ -393,9 +397,7 @@ function Booking({
                 {/* @ts-ignore */}
                 {format(
                   car_request.to,
-                  car_request.status === "completed"
-                    ? "hh:mm a, P"
-                    : "PPP"
+                  car_request.status === "completed" ? "hh:mm a, P" : "PPP"
                 )}
                 <CalendarIcon className="ml-auto h-4 w-4" />
               </Button>
@@ -1652,7 +1654,7 @@ function Dashboard() {
 
       return admins.data;
     },
-    refetchInterval: 10000,
+    refetchInterval: 5000,
     enabled: auth.user?.role === "super_admin",
   });
 
@@ -1742,7 +1744,7 @@ function Dashboard() {
 
       return branches.data;
     },
-    refetchInterval: 10000,
+    refetchInterval: 5000,
     enabled: auth.user?.role === "super_admin",
   });
 
@@ -1768,7 +1770,7 @@ function Dashboard() {
 
       return cars.data;
     },
-    refetchInterval: 10000,
+    refetchInterval: 5000,
     enabled: auth.user?.role === "super_admin",
   });
 
@@ -1795,7 +1797,7 @@ function Dashboard() {
       return response.data;
     },
     queryKey: ["bookingRequests"],
-    refetchInterval: 10000,
+    refetchInterval: 5000,
   });
 
   const cancelledBookingRequestsQuery = useQuery({
@@ -1823,7 +1825,7 @@ function Dashboard() {
       return response.data;
     },
     queryKey: ["cancelledBookings"],
-    refetchInterval: 10000,
+    refetchInterval: 5000,
   });
 
   const completedBookingRequestsQuery = useQuery({
@@ -1849,7 +1851,7 @@ function Dashboard() {
       return response.data;
     },
     queryKey: ["completedBookings"],
-    refetchInterval: 10000,
+    refetchInterval: 5000,
   });
 
   const upcommingBookingRequestsQuery = useQuery({
@@ -1875,7 +1877,7 @@ function Dashboard() {
       return response.data;
     },
     queryKey: ["upcommingBookings"],
-    refetchInterval: 10000,
+    refetchInterval: 5000,
   });
 
   const ongoingBookingRequestsQuery = useQuery({
@@ -1901,7 +1903,7 @@ function Dashboard() {
       return response.data;
     },
     queryKey: ["ongoingBookings"],
-    refetchInterval: 10000,
+    refetchInterval: 5000,
   });
 
   if (auth.user?.role === "user") {
@@ -2150,56 +2152,94 @@ function Dashboard() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="request" className="space-y-4">
-          {bookingRequestsQuery.data?.map((booking, index) => (
-            <div className="relative" key={booking.car_request.id}>
-              <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
-                {index + 1}.
-              </h2>
-              <Booking booking={booking} />
-            </div>
-          ))}
+          {bookingRequestsQuery.data &&
+          bookingRequestsQuery.data?.length !== 0 ? (
+            bookingRequestsQuery.data.map((booking, index) => (
+              <div className="relative" key={booking.car_request.id}>
+                <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
+                  {index + 1}.
+                </h2>
+                <Booking booking={booking} />
+              </div>
+            ))
+          ) : (
+            <NoRequestsCard message="booking requests" />
+          )}
         </TabsContent>
         <TabsContent value="upcoming" className="space-y-4">
-          {upcommingBookingRequestsQuery.data?.map((booking, index) => (
-            <div className="relative" key={booking.car_request.id}>
-              <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
-                {index + 1}.
-              </h2>
-              <Booking booking={booking} />
-            </div>
-          ))}
+          {upcommingBookingRequestsQuery.data &&
+          upcommingBookingRequestsQuery.data?.length !== 0 ? (
+            upcommingBookingRequestsQuery.data.map((booking, index) => (
+              <div className="relative" key={booking.car_request.id}>
+                <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
+                  {index + 1}.
+                </h2>
+                <Booking booking={booking} />
+              </div>
+            ))
+          ) : (
+            <NoRequestsCard message="upcoming bookings" />
+          )}
         </TabsContent>
         <TabsContent value="ongoing" className="space-y-4">
-          {ongoingBookingRequestsQuery.data?.map((booking, index) => (
-            <div className="relative" key={booking.car_request.id}>
-              <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
-                {index + 1}.
-              </h2>
-              <Booking booking={booking} />
-            </div>
-          ))}
+          {ongoingBookingRequestsQuery.data &&
+          ongoingBookingRequestsQuery.data?.length !== 0 ? (
+            ongoingBookingRequestsQuery.data.map((booking, index) => (
+              <div className="relative" key={booking.car_request.id}>
+                <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
+                  {index + 1}.
+                </h2>
+                <Booking booking={booking} />
+              </div>
+            ))
+          ) : (
+            <NoRequestsCard message="ongoing bookings" />
+          )}
         </TabsContent>
         <TabsContent value="completed" className="space-y-4">
-          {completedBookingRequestsQuery.data?.map((booking, index) => (
-            <div className="relative" key={booking.car_request.id}>
-              <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
-                {index + 1}.
-              </h2>
-              <Booking booking={booking} />
-            </div>
-          ))}
+          {completedBookingRequestsQuery.data &&
+          completedBookingRequestsQuery.data?.length !== 0 ? (
+            completedBookingRequestsQuery.data.map((booking, index) => (
+              <div className="relative" key={booking.car_request.id}>
+                <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
+                  {index + 1}.
+                </h2>
+                <Booking booking={booking} />
+              </div>
+            ))
+          ) : (
+            <NoRequestsCard message="completed bookings" />
+          )}
         </TabsContent>
         <TabsContent value="cancelled" className="space-y-4">
-          {cancelledBookingRequestsQuery.data?.map((booking, index) => (
-            <div className="relative" key={booking.car_request.id}>
-              <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
-                {index + 1}.
-              </h2>
-              <Booking booking={booking} />
-            </div>
-          ))}
+          {cancelledBookingRequestsQuery.data &&
+          cancelledBookingRequestsQuery.data?.length !== 0 ? (
+            cancelledBookingRequestsQuery.data.map((booking, index) => (
+              <div className="relative" key={booking.car_request.id}>
+                <h2 className="font-semibold text-sm text-muted-foreground absolute left-2 top-1">
+                  {index + 1}.
+                </h2>
+                <Booking booking={booking} />
+              </div>
+            ))
+          ) : (
+            <NoRequestsCard message="cancelled bookings" />
+          )}
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function NoRequestsCard({ message }: { message: string }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>No {message} Available</CardTitle>
+        <CardDescription>
+          <p>There are no {message} at the moment. Please check back later.</p>
+        </CardDescription>
+      </CardHeader>
+    </Card>
   );
 }

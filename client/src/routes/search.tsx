@@ -47,7 +47,7 @@ function SearchPage() {
 
       return cars.data;
     },
-    refetchInterval: 10000,
+
     enabled: !!location,
   });
 
