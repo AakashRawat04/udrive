@@ -1,12 +1,10 @@
 import {
-  integer,
-  numeric,
   pgEnum,
   pgTable,
   text,
   timestamp,
   uuid,
-  varchar,
+  varchar
 } from "drizzle-orm/pg-core";
 import { userStatus, userTypes } from "../utils/constants";
 import * as v from "valibot";

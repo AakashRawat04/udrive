@@ -7,7 +7,6 @@ import { branch } from "./routes/branch/branch";
 import { car } from "./routes/car/car";
 import { carJourney } from "./routes/car/carJourney";
 import { carRequest } from "./routes/car/carRequest";
-import { rating } from "./routes/rating/rating";
 
 const api = new Hono()
   .route("/auth", auth)
@@ -15,7 +14,6 @@ const api = new Hono()
   .route("/", car)
   .route("/", carRequest)
   .route("/", carJourney)
-  .route("/", rating);
 
 const app = new Hono()
   .use(cors())

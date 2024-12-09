@@ -58,22 +58,6 @@ export const carRequestDbSchema = pgTable("car_request", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// export const carJourneyDbSchema = pgTable("car_journey", {
-// 	id: uuid("id").notNull().primaryKey().defaultRandom(),
-// 	car: uuid("car")
-// 		.references(() => carDbSchema.id)
-// 		.notNull(),
-// 	user: uuid("user")
-// 		.references(() => userDbSchema.id)
-// 		.notNull(),
-// 	startTime: timestamp("start_time").notNull(),
-// 	isCancled: boolean("is_cancled").notNull().default(false),
-// 	endTime: timestamp("end_time"),
-// 	finalPrice: numeric("final_price"),
-// 	createdAt: timestamp("created_at").notNull().defaultNow(),
-// 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
-// });
-
 export const carSchema = v.object({
   brand: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
   model: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
