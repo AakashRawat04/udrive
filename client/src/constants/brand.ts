@@ -1,0 +1,1 @@
+export const BRAND_EMAIL = 'info@udrive.com'
