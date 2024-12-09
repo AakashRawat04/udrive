@@ -4,7 +4,7 @@ import {
   text,
   timestamp,
   uuid,
-  varchar
+  varchar,
 } from "drizzle-orm/pg-core";
 import { userStatus, userTypes } from "../utils/constants";
 import * as v from "valibot";
@@ -12,12 +12,12 @@ import * as v from "valibot";
 // role: user | admin | super_admin
 export const roleEnum = pgEnum(
   "role",
-  Object.values(userTypes) as [string, ...string[]],
+  Object.values(userTypes) as [string, ...string[]]
 );
 
 export const userStatusEnum = pgEnum(
   "status",
-  Object.values(userStatus) as ["verified", "unverified"],
+  Object.values(userStatus) as ["verified", "unverified"]
 );
 
 export const userDbSchema = pgTable("user", {
@@ -34,8 +34,16 @@ export const userDbSchema = pgTable("user", {
   otp: text("otp"),
   drivingLicense: text("driver_license"),
   role: roleEnum("role"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
 });
 
 export const insertUserSchema = v.object({

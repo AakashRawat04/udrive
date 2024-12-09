@@ -375,7 +375,7 @@ function Booking({
               >
                 {/* @ts-ignore */}
                 {format(
-                  car_request.from,
+                  car_request.status === "completed" ? car_request.startTime! : car_request.from,
                   car_request.status === "completed" ? "hh:mm a, P" : "PPP"
                 )}
                 <CalendarIcon className="ml-auto h-4 w-4" />
@@ -396,7 +396,7 @@ function Booking({
               >
                 {/* @ts-ignore */}
                 {format(
-                  car_request.to,
+                  car_request.status === "completed" ? car_request.endTime! : car_request.from,
                   car_request.status === "completed" ? "hh:mm a, P" : "PPP"
                 )}
                 <CalendarIcon className="ml-auto h-4 w-4" />

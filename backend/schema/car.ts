@@ -29,15 +29,23 @@ export const carDbSchema = pgTable("car", {
   transmission: varchar("transmission", { length: 255 }).notNull(),
   seats: integer("seats").notNull(),
   topSpeed: integer("top_speed").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
 });
 
 // car request schema for car request table
 // multiple users can request for a car and the admin can update the status of the request to pending, approved or rejected
 export const carRequestStatusEnum = pgEnum(
   "car_request_status",
-  Object.values(carRequestStatus) as [string, ...string[]],
+  Object.values(carRequestStatus) as [string, ...string[]]
 );
 
 export const carRequestDbSchema = pgTable("car_request", {
@@ -48,14 +56,30 @@ export const carRequestDbSchema = pgTable("car_request", {
   user: uuid("user")
     .references(() => userDbSchema.id)
     .notNull(),
-  from: timestamp("from").notNull(),
-  to: timestamp("to").notNull(),
+  from: timestamp("from", {
+    withTimezone: true,
+  }).notNull(),
+  to: timestamp("to", {
+    withTimezone: true,
+  }).notNull(),
   status: carRequestStatusEnum("status").notNull(),
-  startTime: timestamp("start_time"),
-  endTime: timestamp("end_time"),
+  startTime: timestamp("start_time", {
+    withTimezone: true,
+  }),
+  endTime: timestamp("end_time", {
+    withTimezone: true,
+  }),
   bill: numeric("bill"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
 });
 
 export const carSchema = v.object({
