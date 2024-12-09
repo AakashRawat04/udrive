@@ -18,10 +18,9 @@ import { useState } from "react";
 import { string } from "zod";
 import {
   InputOTP,
-  InputOTPGroup,
-  InputOTPSeparator,
-  InputOTPSlot,
+  InputOTPGroup, InputOTPSlot
 } from "@/components/ui/input-otp";
+import { sleep } from "@/lib/helpers";
 
 export const Route = createFileRoute("/user/register")({
   component: LoginForm,
@@ -77,7 +76,8 @@ function LoginForm() {
         return;
       }
 
-      toast.success("Registered successfully");
+      toast.success("Account created successfully. Redirecting to login...");
+      await sleep(1000);
       router.navigate({
         to: "/user/login",
       });
