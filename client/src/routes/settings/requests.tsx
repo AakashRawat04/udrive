@@ -26,7 +26,7 @@ function Requests() {
             branch: Branch;
           }[]
         >
-      >("/car.request.list", {
+      >("/car.request.listByUser", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -47,7 +47,9 @@ function Requests() {
     <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] flex-1 flex-col gap-4 bg-background p-4 md:gap-8 md:p-10">
       <div className="mx-auto grid w-full max-w-6xl gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage your car requests and preferences.</p>
+        <p className="text-muted-foreground">
+          Manage your car requests and preferences.
+        </p>
       </div>
       <Separator />
       <div className="mx-auto grid w-full max-w-6xl items-start gap-6 md:grid-cols-[180px_1fr] lg:grid-cols-[250px_1fr]">
@@ -105,25 +107,39 @@ function CarRequestCard({
     <Card>
       <CardHeader className="grid grid-cols-[1fr_auto] items-start gap-4 space-y-0">
         <div className="space-y-1">
-          <CardTitle>{car.brand} {car.model}</CardTitle>
+          <CardTitle>
+            {car.brand} {car.model}
+          </CardTitle>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPinIcon className="h-4 w-4" />
             {branch.name}, {branch.address}
           </div>
         </div>
-        <Badge
-          variant="secondary"
-          className={cn("capitalize", statusColors[carRequest.status as keyof typeof statusColors])}
-        >
-          {carRequest.status}
-        </Badge>
+        <div className="space-y-1 flex flex-col items-end">
+          <Badge
+            variant="secondary"
+            className={cn(
+              "capitalize",
+              statusColors[carRequest.status as keyof typeof statusColors]
+            )}
+          >
+            {carRequest.status}
+          </Badge>
+          {carRequest.status === "completed" && (
+            // Bill
+            <p className="text-base text-muted-foreground">
+              Rs. {carRequest.bill}
+            </p>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 text-sm">
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
             <span>
-              {new Date(carRequest.from).toLocaleDateString()} - {new Date(carRequest.to).toLocaleDateString()}
+              {new Date(carRequest.from).toLocaleDateString()} -{" "}
+              {new Date(carRequest.to).toLocaleDateString()}
             </span>
           </div>
         </div>

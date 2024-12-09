@@ -31,7 +31,7 @@ export const car = new Hono()
   .use(
     jwt({
       secret: process.env.JWT_SECRET!,
-    })
+    }),
   )
 
   .post("/image.upload", vValidator("form", imageUploadSchema), async (c) => {
@@ -89,7 +89,6 @@ export const car = new Hono()
   .post("/car.create", vValidator("json", carSchema), async (c) => {
     const user = c.get("jwtPayload");
     const body = c.req.valid("json");
-    console.log(body);
 
     // check if user is super admin
     if (user.role !== userTypes.SUPER_ADMIN) {
@@ -102,14 +101,11 @@ export const car = new Hono()
       .from(branchDbSchema)
       .where(eq(branchDbSchema.id, body.branch));
 
-    console.log("branchResponse", branchResponse);
-
     if (branchResponse.length === 0) {
       return c.json({ error: "Branch not found" });
     }
 
     const response = await db.insert(carDbSchema).values(body).returning();
-    console.log(response);
 
     if (response.length === 0) {
       return c.json({ error: "Car not created" });
@@ -122,7 +118,6 @@ export const car = new Hono()
   .put("/car.update", vValidator("json", updateCarSchema), async (c) => {
     const user = c.get("jwtPayload");
     const body = c.req.valid("json");
-    console.log(body);
 
     // check if user is super admin
     if (user.role !== userTypes.SUPER_ADMIN) {
@@ -135,8 +130,6 @@ export const car = new Hono()
       .from(branchDbSchema)
       .where(eq(branchDbSchema.id, body.branch));
 
-    console.log("branchResponse", branchResponse);
-
     if (branchResponse.length === 0) {
       return c.json({ error: "Branch not found" });
     }
@@ -146,7 +139,6 @@ export const car = new Hono()
       .set(body)
       .where(eq(carDbSchema.id, body.id))
       .returning();
-    console.log(response);
 
     if (response.length === 0) {
       return c.json({ error: "Car not updated" });
@@ -159,7 +151,6 @@ export const car = new Hono()
   .post("/car.assign", vValidator("json", assignCarSchema), async (c) => {
     const user = c.get("jwtPayload");
     const body = c.req.valid("json");
-    console.log(body);
 
     // check if user is super admin
     if (user.role !== userTypes.SUPER_ADMIN) {
@@ -172,8 +163,6 @@ export const car = new Hono()
       .from(carDbSchema)
       .where(eq(carDbSchema.id, body.carId));
 
-    console.log("carResponse", carResponse);
-
     if (carResponse.length === 0) {
       return c.json({ error: "Car not found" });
     }
@@ -184,8 +173,6 @@ export const car = new Hono()
       .from(branchDbSchema)
       .where(eq(branchDbSchema.id, body.branchId));
 
-    console.log("branchResponse", branchResponse);
-
     if (branchResponse.length === 0) {
       return c.json({ error: "Branch not found" });
     }
@@ -195,7 +182,6 @@ export const car = new Hono()
       .set({ branch: body.branchId })
       .where(eq(carDbSchema.id, body.carId))
       .returning();
-    console.log(response);
 
     if (response.length === 0) {
       return c.json({ error: "Car not assigned" });
@@ -233,7 +219,7 @@ export const car = new Hono()
       .from(carDbSchema)
       .where(eq(carDbSchema.branch, id))
       .leftJoin(branchDbSchema, eq(carDbSchema.branch, branchDbSchema.id));
-    console.log(cars);
+
     return c.json({ data: cars });
   })
 
@@ -241,7 +227,6 @@ export const car = new Hono()
   .delete("/car.delete/:id", async (c) => {
     const user = c.get("jwtPayload");
     const id = c.req.param("id");
-    console.log(id);
 
     // check if user is super admin
     if (user.role !== userTypes.SUPER_ADMIN) {
@@ -252,7 +237,6 @@ export const car = new Hono()
       .delete(carDbSchema)
       .where(eq(carDbSchema.id, id))
       .returning();
-    console.log(response);
 
     if (response.length === 0) {
       return c.json({ error: "Car not deleted" });

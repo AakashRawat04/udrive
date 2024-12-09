@@ -14,14 +14,13 @@ export const rating = new Hono()
   .use(
     jwt({
       secret: process.env.JWT_SECRET!,
-    })
+    }),
   )
 
   // create rating
   .post("/rating.create", vValidator("json", ratingSchema), async (c) => {
     const user = c.get("jwtPayload");
     const body = c.req.valid("json");
-    console.log(body);
 
     // check if user is super admin
     if (user.role !== userTypes.USER) {
@@ -29,7 +28,6 @@ export const rating = new Hono()
     }
 
     const response = await db.insert(ratingDbSchema).values(body).returning();
-    console.log(response);
 
     if (response.length === 0) {
       return c.json({ error: "Rating not created" });
@@ -42,7 +40,6 @@ export const rating = new Hono()
   .put("/rating.update", vValidator("json", updateRatingSchema), async (c) => {
     const user = c.get("jwtPayload");
     const body = c.req.valid("json");
-    console.log(body);
 
     // check if user is super admin
     if (user.role !== userTypes.USER) {
@@ -54,7 +51,6 @@ export const rating = new Hono()
       .set(body)
       .where(eq(ratingDbSchema.id, body.id))
       .returning();
-    console.log(response);
 
     if (response.length === 0) {
       return c.json({ error: "Rating not updated" });
@@ -70,7 +66,6 @@ export const rating = new Hono()
     async (c) => {
       const user = c.get("jwtPayload");
       const body = c.req.valid("json");
-      console.log(body);
 
       // check if user is super admin
       if (user.role !== userTypes.USER) {
@@ -81,26 +76,23 @@ export const rating = new Hono()
         .delete(ratingDbSchema)
         .where(eq(ratingDbSchema.id, body.id))
         .returning();
-      console.log(response);
 
       if (response.length === 0) {
         return c.json({ error: "Rating not deleted" });
       }
 
       return c.json({ data: response[0] });
-    }
+    },
   )
 
   // get all ratings by car id
   .get("/rating.get/:id", async (c) => {
     const id = c.req.param("id");
-    console.log(id);
 
     const response = await db
       .select()
       .from(ratingDbSchema)
       .where(eq(ratingDbSchema.car, id));
-    console.log(response);
 
     return c.json({ data: response });
   })
@@ -108,13 +100,11 @@ export const rating = new Hono()
   // get all ratings by user id
   .get("/rating.getByUserId/:id", async (c) => {
     const id = c.req.param("id");
-    console.log(id);
 
     const response = await db
       .select()
       .from(ratingDbSchema)
       .where(eq(ratingDbSchema.user, id));
-    console.log(response);
 
     return c.json({ data: response });
   });

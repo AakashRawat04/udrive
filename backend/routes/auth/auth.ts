@@ -4,10 +4,10 @@ import { Hono } from "hono";
 import { jwt, sign } from "hono/jwt";
 import postgres from "postgres";
 import {
-	editAdminSchema,
-	loginSchema,
-	registerSchema,
-	getOtpSchema,
+  editAdminSchema,
+  loginSchema,
+  registerSchema,
+  getOtpSchema,
 } from "../../schema/auth";
 import { insertUserSchema, userDbSchema } from "../../schema/user";
 import { userStatus, userTypes } from "../../utils/constants";
@@ -40,11 +40,10 @@ export const auth = new Hono()
       .where(
         and(
           eq(userDbSchema.email, body.email),
-          eq(userDbSchema.status, userStatus.VERIFIED)
-        )
+          eq(userDbSchema.status, userStatus.VERIFIED),
+        ),
       );
 
-    console.log(response);
     if (response.length === 0) {
       return c.json({ error: "User not found", data: null });
     }
@@ -62,7 +61,7 @@ export const auth = new Hono()
         role: userResponse.role,
         exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30, // 30 days
       },
-      process.env.JWT_SECRET!
+      process.env.JWT_SECRET!,
     );
 
     return c.json({ data: token, error: null });
@@ -193,7 +192,7 @@ The UDrive Team`,
         .where(eq(userDbSchema.email, payload.email));
 
       return c.json({ data: response });
-    }
+    },
   )
 
   // route for super admins only to create admin users
@@ -206,11 +205,10 @@ The UDrive Team`,
     async (c) => {
       try {
         const body = c.req.valid("json");
-        console.log(body);
 
         // check if the user is a super admin
         const jwtPayload = c.get("jwtPayload");
-        console.log("paylosd", jwtPayload);
+
         if (jwtPayload.role !== userTypes.SUPER_ADMIN) {
           return c.json({ error: "Unauthorized" });
         }
@@ -228,7 +226,7 @@ The UDrive Team`,
         console.error(e);
         return c.json({ error: "An error occurred" });
       }
-    }
+    },
   )
 
   .put(
@@ -261,7 +259,7 @@ The UDrive Team`,
         console.error(e);
         return c.json({ error: "An error occurred" });
       }
-    }
+    },
   )
 
   .get(
@@ -281,7 +279,7 @@ The UDrive Team`,
         .where(eq(userDbSchema.role, userTypes.ADMIN));
 
       return c.json({ data: response });
-    }
+    },
   )
 
   .delete(
@@ -308,7 +306,7 @@ The UDrive Team`,
         }
         throw e;
       }
-    }
+    },
   );
 
 // list all the admins

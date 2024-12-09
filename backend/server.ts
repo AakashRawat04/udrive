@@ -10,25 +10,25 @@ import { carRequest } from "./routes/car/carRequest";
 import { rating } from "./routes/rating/rating";
 
 const api = new Hono()
-	.route("/auth", auth)
-	.route("/", branch)
-	.route("/", car)
-	.route("/", carRequest)
-	.route("/", carJourney)
-	.route("/", rating);
+  .route("/auth", auth)
+  .route("/", branch)
+  .route("/", car)
+  .route("/", carRequest)
+  .route("/", carJourney)
+  .route("/", rating);
 
 const app = new Hono()
-	.use(cors())
-	.use(logger())
-	.get("/healthcheck", () => {
-		return new Response(null, { status: 200 });
-	})
-	.route("/api", api);
+  .use(cors())
+  .use(logger())
+  .get("/healthcheck", () => {
+    return new Response(null, { status: 200 });
+  })
+  .route("/api", api);
 
 const port = Number(process.env.SERVER_PORT) || 3000;
 console.log(`Server is running on port ${port}`);
 
 serve({
-	fetch: app.fetch,
-	port,
+  fetch: app.fetch,
+  port,
 });

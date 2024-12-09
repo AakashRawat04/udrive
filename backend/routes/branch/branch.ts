@@ -17,14 +17,13 @@ export const branch = new Hono()
   .use(
     jwt({
       secret: process.env.JWT_SECRET!,
-    })
+    }),
   )
 
   // create branch (super admin only)
   .post("/branch.create", vValidator("json", branchSchema), async (c) => {
     const user = c.get("jwtPayload");
     const body = c.req.valid("json");
-    console.log(body);
 
     // check if user is super admin
     if (user.role !== userTypes.SUPER_ADMIN) {
@@ -38,18 +37,15 @@ export const branch = new Hono()
       .where(
         and(
           eq(userDbSchema.id, body.admin),
-          eq(userDbSchema.role, userTypes.ADMIN)
-        )
+          eq(userDbSchema.role, userTypes.ADMIN),
+        ),
       );
-
-    console.log("userResponse", userResponse);
 
     if (userResponse.length === 0) {
       return c.json({ error: "User not found" });
     }
 
     const response = await db.insert(branchDbSchema).values(body).returning();
-    console.log(response);
 
     if (response.length === 0) {
       return c.json({ error: "Branch not created" });
@@ -62,7 +58,6 @@ export const branch = new Hono()
   .put("/branch.update", vValidator("json", updateBranchSchema), async (c) => {
     const user = c.get("jwtPayload");
     const body = c.req.valid("json");
-    console.log(body);
 
     // check if user is super admin
     if (user.role !== userTypes.SUPER_ADMIN) {
@@ -74,7 +69,6 @@ export const branch = new Hono()
       .set(body)
       .where(eq(branchDbSchema.id, body.id))
       .returning();
-    console.log(response);
 
     if (response.length === 0) {
       return c.json({ error: "Branch not updated" });
@@ -87,7 +81,6 @@ export const branch = new Hono()
   .delete("/branch.delete/:id", async (c) => {
     const user = c.get("jwtPayload");
     const id = c.req.param("id");
-    console.log(id);
 
     // check if user is super admin
     if (user.role !== userTypes.SUPER_ADMIN) {
@@ -99,7 +92,6 @@ export const branch = new Hono()
         .delete(branchDbSchema)
         .where(eq(branchDbSchema.id, id))
         .returning();
-      console.log(response);
 
       if (response.length === 0) {
         return c.json({ error: "Branch not deleted" });
@@ -139,7 +131,6 @@ export const branch = new Hono()
   .put("/branch.assign", vValidator("json", assignBranchSchema), async (c) => {
     const user = c.get("jwtPayload");
     const body = c.req.valid("json");
-    console.log(body);
 
     // check if user is super admin
     if (user.role !== userTypes.SUPER_ADMIN) {
@@ -155,12 +146,10 @@ export const branch = new Hono()
           eq(user.id, body.userId),
           or(
             eq(user.role, userTypes.SUPER_ADMIN),
-            eq(user.role, userTypes.ADMIN)
-          )
-        )
+            eq(user.role, userTypes.ADMIN),
+          ),
+        ),
       );
-
-    console.log("userResponse", userResponse);
 
     if (userResponse.length === 0) {
       return c.json({ error: "User not found" });
@@ -171,7 +160,6 @@ export const branch = new Hono()
       .set({ admin: body.userId })
       .where(eq(branchDbSchema.id, body.branchId))
       .returning();
-    console.log(response);
 
     if (response.length === 0) {
       return c.json({ error: "Branch not assigned" });
