@@ -8,6 +8,7 @@ import {
   loginSchema,
   registerSchema,
   getOtpSchema,
+  adminSchema,
 } from "../../schema/auth";
 import { insertUserSchema, userDbSchema } from "../../schema/user";
 import { userStatus, userTypes } from "../../utils/constants";
@@ -198,7 +199,7 @@ The UDrive Team`,
   // route for super admins only to create admin users
   .post(
     "/admin.create",
-    vValidator("json", registerSchema),
+    vValidator("json", adminSchema),
     jwt({
       secret: process.env.JWT_SECRET!,
     }),

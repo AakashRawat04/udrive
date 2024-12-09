@@ -12,6 +12,12 @@ export const registerSchema = v.object({
   otp: v.pipe(v.string(), v.minLength(6), v.maxLength(6)),
 });
 
+export const adminSchema = v.object({
+  name: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
+  email: v.pipe(v.string(), v.email()),
+  password: v.string(),
+});
+
 export const editAdminSchema = v.object({
   name: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(255))),
   email: v.optional(v.pipe(v.string(), v.email())),

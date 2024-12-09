@@ -42,9 +42,6 @@ export const carRequestStatusEnum = pgEnum(
 
 export const carRequestDbSchema = pgTable("car_request", {
   id: uuid("id").notNull().primaryKey().defaultRandom(),
-  branch: uuid("branch")
-    .references(() => branchDbSchema.id)
-    .notNull(),
   car: uuid("car")
     .references(() => carDbSchema.id)
     .notNull(),

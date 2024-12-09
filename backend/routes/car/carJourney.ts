@@ -377,7 +377,7 @@ export const carJourney = new Hono()
         .where(
           and(
             eq(carRequestDbSchema.status, carRequestStatus.APPROVED),
-            inArray(carRequestDbSchema.branch, branchIds),
+            inArray(carDbSchema.branch, branchIds),
           ),
         )
         .leftJoin(carDbSchema, eq(carRequestDbSchema.car, carDbSchema.id))
@@ -432,7 +432,7 @@ export const carJourney = new Hono()
         .where(
           and(
             eq(carRequestDbSchema.status, carRequestStatus.STARTED),
-            inArray(carRequestDbSchema.branch, branchIds),
+            inArray(carDbSchema.branch, branchIds),
           ),
         )
         .leftJoin(carDbSchema, eq(carRequestDbSchema.car, carDbSchema.id))
@@ -486,7 +486,7 @@ export const carJourney = new Hono()
         .where(
           and(
             eq(carRequestDbSchema.status, carRequestStatus.COMPLETED),
-            inArray(carRequestDbSchema.branch, branchIds),
+            inArray(carDbSchema.branch, branchIds),
           ),
         )
         .leftJoin(carDbSchema, eq(carRequestDbSchema.car, carDbSchema.id))
@@ -543,7 +543,7 @@ export const carJourney = new Hono()
               eq(carRequestDbSchema.status, carRequestStatus.CANCELLED),
               eq(carRequestDbSchema.status, carRequestStatus.REJECTED),
             ),
-            inArray(carRequestDbSchema.branch, branchIds),
+            inArray(carDbSchema.branch, branchIds),
           ),
         )
         .leftJoin(carDbSchema, eq(carRequestDbSchema.car, carDbSchema.id))

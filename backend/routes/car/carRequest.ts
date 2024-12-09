@@ -1,5 +1,5 @@
 import { vValidator } from "@hono/valibot-validator";
-import { and, eq, gte, lte, or } from "drizzle-orm";
+import { and, desc, eq, gte, lte, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { jwt } from "hono/jwt";
 import { branchDbSchema } from "../../schema/branch";
@@ -17,7 +17,7 @@ export const carRequest = new Hono()
   .use(
     jwt({
       secret: process.env.JWT_SECRET!,
-    }),
+    })
   )
 
   /**
@@ -83,14 +83,14 @@ export const carRequest = new Hono()
           or(
             and(
               gte(carRequestDbSchema.from, new Date(body.from)),
-              lte(carRequestDbSchema.from, new Date(body.to)),
+              lte(carRequestDbSchema.from, new Date(body.to))
             ),
             and(
               gte(carRequestDbSchema.to, new Date(body.from)),
-              lte(carRequestDbSchema.to, new Date(body.to)),
-            ),
-          ),
-        ),
+              lte(carRequestDbSchema.to, new Date(body.to))
+            )
+          )
+        )
       );
 
     if (overlappingRequests.length > 0) {
@@ -110,11 +110,11 @@ export const carRequest = new Hono()
           or(
             and(
               eq(carRequestDbSchema.from, new Date(body.from)),
-              eq(carRequestDbSchema.to, new Date(body.to)),
+              eq(carRequestDbSchema.to, new Date(body.to))
             ),
-            eq(carRequestDbSchema.status, carRequestStatus.APPROVED),
-          ),
-        ),
+            eq(carRequestDbSchema.status, carRequestStatus.APPROVED)
+          )
+        )
       );
 
     if (userCarRequests.length > 0) {
@@ -190,45 +190,8 @@ export const carRequest = new Hono()
       .from(carRequestDbSchema)
       .where(eq(carRequestDbSchema.user, userResponse[0].id))
       .leftJoin(carDbSchema, eq(carRequestDbSchema.car, carDbSchema.id))
-      .leftJoin(
-        branchDbSchema,
-        eq(carRequestDbSchema.branch, branchDbSchema.id),
-      );
-
-    return c.json({ data: response });
-  })
-
-  // list car requests by branch
-  .get("/car.request.list.by.branch/:branchId/:status", async (c) => {
-    const user = c.get("jwtPayload");
-    const branchId = c.req.param("branchId");
-    const status = c.req.param("status");
-
-    // check if user is admin
-    if (user.role !== userTypes.ADMIN) {
-      return c.json({ error: "Unauthorized" });
-    }
-
-    //fetch if branch with id exists or not
-    const branchResponse = await db
-      .select()
-      .from(branchDbSchema)
-      .where(eq(branchDbSchema.id, branchId));
-
-    if (branchResponse.length === 0) {
-      return c.json({ error: "Branch not found" });
-    }
-
-    // fetch car requests by branch
-    const response = await db
-      .select()
-      .from(carRequestDbSchema)
-      .where(
-        and(
-          eq(carRequestDbSchema.branch, branchId),
-          eq(carRequestDbSchema.status, status),
-        ),
-      );
+      .leftJoin(branchDbSchema, eq(carDbSchema.branch, branchDbSchema.id))
+      .orderBy(desc(carRequestDbSchema.updatedAt));
 
     return c.json({ data: response });
   })
@@ -261,8 +224,8 @@ export const carRequest = new Hono()
       .where(
         and(
           eq(carRequestDbSchema.car, carId),
-          eq(carRequestDbSchema.status, status),
-        ),
+          eq(carRequestDbSchema.status, status)
+        )
       );
 
     return c.json({ data: response });
@@ -319,7 +282,7 @@ export const carRequest = new Hono()
       // }
 
       return c.json({ data: response[0] });
-    },
+    }
   )
 
   // delete car request

@@ -30,7 +30,12 @@ export const Route = createRootRoute({
 
       return;
     } else {
-      if (user && ctx.location.pathname !== '/settings/profile' && !hasCompletedOnboarding(user)) {
+      if (
+        user &&
+        user.role === "user" &&
+        ctx.location.pathname !== "/settings/profile" &&
+        !hasCompletedOnboarding(user)
+      ) {
         throw redirect({
           to: "/settings/profile",
         });
