@@ -31,6 +31,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Branch } from "@/data/branch";
 import type { User } from "@/data/user";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
 export const SearchForm: React.FC = () => {
   const [location, setLocation] = useQueryState("location");
@@ -43,6 +44,7 @@ export const SearchForm: React.FC = () => {
     serialize: (v) => `${v.getFullYear()}-${v.getMonth() + 1}-${v.getDate()}`,
   });
   const today = new Date();
+  const { t } = useTranslation();
 
   const branches = useQuery({
     queryKey: ["branches"],
@@ -66,7 +68,6 @@ export const SearchForm: React.FC = () => {
 
       return branches.data;
     },
-
   });
 
   const canSubmit = location && pickupDate && dropDate;
@@ -78,7 +79,7 @@ export const SearchForm: React.FC = () => {
           <div className="grid gap-6 md:grid-cols-3 w-full">
             <div className="flex flex-col gap-2">
               <Label htmlFor="location" className="text-sm font-medium">
-                Location
+                {t("search.fields.location")}
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -137,7 +138,7 @@ export const SearchForm: React.FC = () => {
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="pickupDate" className="text-sm font-medium">
-                Pick up date
+                {t("search.fields.pickupDate")}
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -180,7 +181,7 @@ export const SearchForm: React.FC = () => {
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="dropDate" className="text-sm font-medium">
-                Drop off date
+                {t("search.fields.dropOffDate")}
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -233,7 +234,7 @@ export const SearchForm: React.FC = () => {
               }}
             >
               <SearchIcon className="h-4 w-4" />
-              Search Cars
+              {t("search.submit")}
             </Link>
           </Button>
         </form>

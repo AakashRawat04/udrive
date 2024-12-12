@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/classes";
 import { hasCompletedOnboarding } from "@/data/user";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/settings/profile")({
   component: Profile,
@@ -42,6 +43,7 @@ const profileSchema = z.object({
 
 function Profile() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const panCardInputRef = useRef<HTMLInputElement>(null);
   const drivingLicenseInputRef = useRef<HTMLInputElement>(null);
@@ -227,9 +229,11 @@ function Profile() {
   return (
     <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] flex-1 flex-col gap-4 bg-background p-4 md:gap-8 md:p-10">
       <div className="mx-auto grid w-full max-w-6xl gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {t("settings.title")}
+        </h1>
         <p className="text-muted-foreground">
-          Manage your profile and preferences.
+          {t("settings.subtitle")}
         </p>
       </div>
       <Separator />
@@ -242,7 +246,7 @@ function Profile() {
               className: "bg-accent text-accent-foreground",
             }}
           >
-            General
+            {t("settings.routes.general.title")}
           </Link>
           <Link
             to="/settings/requests"
@@ -251,15 +255,17 @@ function Profile() {
               className: "bg-accent text-accent-foreground",
             }}
           >
-            Car Requests
+            {t("settings.routes.request.title")}
           </Link>
         </nav>
         <div className="grid gap-4">
           <Card>
             <CardHeader>
-              <h2 className="text-xl font-semibold">Profile Information</h2>
+              <h2 className="text-xl font-semibold">
+                {t("settings.routes.general.form.title")}
+              </h2>
               <p className="text-sm text-muted-foreground">
-                Update your personal details and documents
+                {t("settings.routes.general.form.subtitle")}
               </p>
             </CardHeader>
             <CardContent>
@@ -270,7 +276,9 @@ function Profile() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Name</FormLabel>
+                        <FormLabel>
+                          {t("settings.routes.general.form.fields.name")}
+                        </FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Name" />
                         </FormControl>
@@ -283,7 +291,9 @@ function Profile() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>
+                          {t("settings.routes.general.form.fields.email")}
+                        </FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="hey@example.com" />
                         </FormControl>
@@ -296,7 +306,9 @@ function Profile() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone</FormLabel>
+                        <FormLabel>
+                          {t("settings.routes.general.form.fields.phone")}
+                        </FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Phone number" />
                         </FormControl>
@@ -309,7 +321,9 @@ function Profile() {
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Address</FormLabel>
+                        <FormLabel>
+                          {t("settings.routes.general.form.fields.address")}
+                        </FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="123, ABC Street" />
                         </FormControl>
@@ -322,7 +336,9 @@ function Profile() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City</FormLabel>
+                        <FormLabel>
+                          {t("settings.routes.general.form.fields.city")}
+                        </FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Mumbai" />
                         </FormControl>
@@ -335,7 +351,9 @@ function Profile() {
                     name="state"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>State</FormLabel>
+                        <FormLabel>
+                          {t("settings.routes.general.form.fields.state")}
+                        </FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Maharashtra" />
                         </FormControl>
@@ -348,7 +366,9 @@ function Profile() {
                     name="panCard"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Pan Card</FormLabel>
+                        <FormLabel>
+                          {t("settings.routes.general.form.fields.panCard")}
+                        </FormLabel>
                         <FormControl>
                           <div className="space-y-2">
                             <Input
@@ -404,7 +424,9 @@ function Profile() {
                     name="drivingLicense"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Driving License</FormLabel>
+                        <FormLabel>
+                          {t("settings.routes.general.form.fields.drivingLicense")}
+                        </FormLabel>
                         <FormControl>
                           <div className="space-y-2">
                             <Input
@@ -465,7 +487,7 @@ function Profile() {
                     {updateUserMutation.isPending && (
                       <Loader2Icon className="w-4 h-4 animate-spin mr-2" />
                     )}
-                    Save Changes
+                    {t("settings.routes.general.form.submit")}
                   </Button>
                 </form>
               </Form>

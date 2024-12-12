@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const testimonials = [
   {
@@ -25,6 +26,7 @@ const testimonials = [
 
 export const TestimonialSection = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { t } = useTranslation();
 
   const nextTestimonial = () => {
     setCurrentIndex((prevIndex) =>
@@ -42,7 +44,9 @@ export const TestimonialSection = () => {
     <div className="bg-gray-100 py-20">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-4xl font-bold">What Our Customers Say</h2>
+          <h2 className="text-4xl font-bold">
+            {t("testimonials.title")}
+          </h2>
           <div className="flex">
             <Button variant="outline" size="icon" onClick={prevTestimonial} className="mr-2">
               <ChevronLeft className="h-6 w-6" />

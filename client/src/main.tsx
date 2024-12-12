@@ -2,6 +2,7 @@ import { NuqsAdapter } from "nuqs/adapters/react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
+import './lib/i18n'
 import "./global.css";
 
 // Set up a Router instance

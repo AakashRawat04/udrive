@@ -12,9 +12,12 @@ import { Link } from "@tanstack/react-router";
 import { Menu, CircleUser } from "lucide-react";
 import { BrandLogo } from "./logo";
 import { useAuth } from "@/providers/AuthProvider";
+import { I18nToggle } from "@/components/i18n-toggle";
+import { useTranslation } from "react-i18next";
 
 export function Nav() {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b border-b-black/10 bg-white/70 backdrop-blur-sm px-4 md:px-6 z-50">
@@ -32,13 +35,13 @@ export function Nav() {
               href="#contactus"
               className="text-muted-foreground transition-colors hover:text-foreground"
             >
-              Contact
+              {t("nav.contact")}
             </a>
             <a
               href="#about"
               className="text-muted-foreground transition-colors hover:text-foreground"
             >
-              About Us
+              {t("nav.about")}
             </a>
           </nav>
         </SheetContent>
@@ -53,16 +56,21 @@ export function Nav() {
             hash="contactus"
             className="text-foreground transition-colors hover:text-foreground"
           >
-            Contact
+            {t("nav.contact")}
           </Link>
           <Link
             to="/"
             hash="about"
             className="text-foreground transition-colors hover:text-foreground"
           >
-            About Us
+            {t("nav.about")}
           </Link>
         </nav>
+        <I18nToggle
+          messages={{
+            toggleLanguage: t("nav.toggle-language"),
+          }}
+        />
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -72,20 +80,22 @@ export function Nav() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("user.my-account")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {user.role === "user" ? (
                 <Link to="/settings/profile">
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
+                  <DropdownMenuItem>{t("user.profile")}</DropdownMenuItem>
                 </Link>
               ) : null}
               {user.role === "super_admin" || user.role === "admin" ? (
                 <Link to="/admin/dashboard">
-                  <DropdownMenuItem>Admin</DropdownMenuItem>
+                  <DropdownMenuItem>{t("user.admin")}</DropdownMenuItem>
                 </Link>
               ) : null}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>
+                {t("user.logout")}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (

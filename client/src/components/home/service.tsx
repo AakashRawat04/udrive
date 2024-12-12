@@ -1,29 +1,31 @@
-import { Star, DollarSign, CheckCircle } from 'lucide-react';
+import { Star, DollarSign, CheckCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const ServiceCards = () => {
+  const { t } = useTranslation();
   const cardData = [
     {
       icon: <Star className="h-8 w-8" />,
-      title: "Quality Choice",
-      description: "We offer a wide range of high-quality vehicles to choose from, including luxury cars, SUVs, vans, and more."
+      title: t("services.service-1.title"),
+      description: t("services.service-1.description"),
     },
     {
       icon: <DollarSign className="h-8 w-8" />,
-      title: "Affordable Prices",
-      description: "Our rental rates are highly competitive and affordable, allowing our customers to enjoy their trips without breaking the bank."
+      title: t("services.service-2.title"),
+      description: t("services.service-2.description"),
     },
     {
       icon: <CheckCircle className="h-8 w-8" />,
-      title: "Convenient Online Booking",
-      description: "With our easy-to-use online booking system, customers can quickly and conveniently reserve their rental car from anywhere, anytime."
-    }
+      title: t("services.service-3.title"),
+      description: t("services.service-3.description"),
+    },
   ];
 
   const floatingSymbols = [
-    { symbol: '🚗', color: 'text-red-500', top: '10%', left: '5%' },
-    { symbol: '🔑', color: 'text-yellow-500', top: '30%', right: '10%' },
-    { symbol: '💼', color: 'text-blue-500', bottom: '20%', left: '15%' },
-    { symbol: '🛣️', color: 'text-green-500', bottom: '10%', right: '5%' },
+    { symbol: "🚗", color: "text-red-500", top: "10%", left: "5%" },
+    { symbol: "🔑", color: "text-yellow-500", top: "30%", right: "10%" },
+    { symbol: "💼", color: "text-blue-500", bottom: "20%", left: "15%" },
+    { symbol: "🛣️", color: "text-green-500", bottom: "10%", right: "5%" },
   ];
 
   return (
@@ -37,23 +39,27 @@ export const ServiceCards = () => {
             left: symbol.left,
             right: symbol.right,
             bottom: symbol.bottom,
-            animation: `float 6s ease-in-out infinite ${index * 1.5}s`
+            animation: `float 6s ease-in-out infinite ${index * 1.5}s`,
           }}
         >
           {symbol.symbol}
         </div>
       ))}
-      <h2 className="text-4xl font-bold text-white mb-4 relative z-10 text-center">Unbeatable Service & Convenience</h2>
-      <p className="text-white mb-8 relative z-10 text-center max-w-2xl">To make renting easy and hassle-free, we provide a variety of services and advantages. We have you covered with a variety of vehicles and flexible rental terms.</p>
+      <h2 className="text-4xl font-bold text-white mb-4 relative z-10 text-center">
+        {t("services.title")}
+      </h2>
+      <p className="text-white mb-8 relative z-10 text-center max-w-2xl">
+        {t("services.subtitle")}
+      </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 pt-24">
         {cardData.map((card, index) => (
           <div key={index} className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="bg-gray-200 p-4 rounded-lg">
-                {card.icon}
-              </div>
+              <div className="bg-gray-200 p-4 rounded-lg">{card.icon}</div>
             </div>
-            <h3 className="text-white text-xl font-semibold mb-2">{card.title}</h3>
+            <h3 className="text-white text-xl font-semibold mb-2">
+              {card.title}
+            </h3>
             <p className="text-white text-lg">{card.description}</p>
           </div>
         ))}
