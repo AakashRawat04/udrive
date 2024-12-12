@@ -71,7 +71,6 @@ function BookCar() {
 
       return response.data;
     },
-
   });
 
   const handleBookNow = useMutation({
@@ -117,7 +116,7 @@ function BookCar() {
   const { car, branch } = carDetails.data;
 
   return (
-    <div className="container mx-auto p-4 md:p-10">
+    <div className="container mx-auto p-4 ">
       <div className="flex flex-col gap-8">
         {/* Image Carousel Section */}
         <Card className="overflow-hidden">
@@ -127,7 +126,7 @@ function BookCar() {
         </Card>
 
         {/* Details Section */}
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-6">
             <Card className="p-6">
               <div>
@@ -288,12 +287,19 @@ function BookCar() {
               </div>
             </CardHeader>
             <CardContent>
-              <APIProvider apiKey="">
-                <Map
-                  zoom={14}
-                  className="w-full h-full aspect-video rounded-lg"
-                />
-              </APIProvider>
+              <div className="rounded-lg">
+                <APIProvider apiKey={import.meta.env.VITE_MAPS_API}>
+                  <Map
+                    gestureHandling="cooperative"
+                    zoom={12}
+                    center={{
+                      lat: 22.5726,
+                      lng: 88.3639,
+                    }}
+                    className="w-full aspect-square"
+                  />
+                </APIProvider>
+              </div>
             </CardContent>
           </Card>
         </div>
