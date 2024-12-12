@@ -2,6 +2,14 @@
   "welcome": "சில நிமிடங்களில் உங்கள் காரை ஆன்லைனில் பதிவு செய்து, வசதியான இடத்தில் எடுத்துக்கொள்ளுங்கள்!",
   "booknow-button": "Book now",
   "booknow": "Book your car now!",
+  "search": {
+    "fields": {
+      "location": "Location",
+      "pickupDate": "Pick up Date",
+      "dropOffDate": "Drop off Date"
+    },
+    "submit": "Search Cars"
+  },
   "why-choose-udrive": {
     "title": "Why choose Udrive?",
     "subtitle": "Renting a luxury car has never been easier. Our streamlined process makes it simple for you to book and confirm your vehicle of choice online",
@@ -41,12 +49,14 @@
   "contact-us": "Contact Us",
   "nav": {
     "about": "About Us",
-    "contact": "Contact"
+    "contact": "Contact",
+    "toggle-language": "Toggle Language"
   },
   "user": {
     "my-account": "My Account",
     "profile": "Profile",
-    "logout": "Logout"
+    "logout": "Logout",
+    "admin": "Admin"
   },
   "settings": {
     "title": "Settings",
