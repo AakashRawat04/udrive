@@ -1,5 +1,5 @@
 {
-  "welcome": "சில நிமிடங்களில் உங்கள் காரை ஆன்லைனில் பதிவு செய்து, வசதியான இடத்தில் எடுத்துக்கொள்ளுங்கள்!",
+  "welcome": "Book your car online in minutes and pick it up at a convenient location!",
   "booknow-button": "Book now",
   "booknow": "Book your car now!",
   "search": {
@@ -84,5 +84,10 @@
         "title": "Car Requests"
       }
     }
+  },
+  "booking": {
+    "title": "Book Your Ride",
+    "distance-included": "Distance Included",
+    "avg-price-per-day": "Average Price Per Day"
   }
 }

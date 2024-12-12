@@ -84,5 +84,10 @@
         "title": "Car Requests"
       }
     }
+  },
+  "booking": {
+    "title": "Book Your Ride",
+    "distance-included": "Distance Included",
+    "avg-price-per-day": "Average Price Per Day"
   }
 }

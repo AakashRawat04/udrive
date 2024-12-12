@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/classes";
 import { format } from "date-fns";
 import { useQueryState } from "nuqs";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/car/$carId")({
   component: BookCar,
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/car/$carId")({
 
 function BookCar() {
   const todayDate = new Date();
+  const { t } = useTranslation();
   const { carId } = Route.useParams();
   const [pickupDate, setPickupDate] = useQueryState<Date>("pickupDate", {
     parse: (v) => new Date(v),
@@ -138,7 +140,7 @@ function BookCar() {
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="outline" className="text-lg">
-                    ₹{car.ratePerHour}/hr
+                    ₹{car.ratePerHour * 24}/day
                   </Badge>
                   <Badge variant="secondary">
                     <DropletsIcon className="h-4 w-4 mr-1" />
@@ -180,7 +182,9 @@ function BookCar() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="w-full">
-                    <Label htmlFor="pickupDate">Pickup Date</Label>
+                    <Label htmlFor="pickupDate">
+                      {t("search.fields.pickupDate")}
+                    </Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -194,7 +198,7 @@ function BookCar() {
                             // @ts-ignore
                             format(pickupDate, "PPP")
                           ) : (
-                            <span>Pick up date</span>
+                            <span>{t("search.fields.pickupDate")}</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4" />
                         </Button>
@@ -217,7 +221,9 @@ function BookCar() {
                     </Popover>
                   </div>
                   <div className="w-full">
-                    <Label htmlFor="dropDate">Drop Date</Label>
+                    <Label htmlFor="dropDate">
+                      {t("search.fields.dropOffDate")}
+                    </Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -231,7 +237,7 @@ function BookCar() {
                             // @ts-ignore
                             format(dropDate, "PPP")
                           ) : (
-                            <span>Drop off date</span>
+                            <span>{t("search.fields.dropOffDate")}</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4" />
                         </Button>
@@ -257,7 +263,7 @@ function BookCar() {
                     <span>200 KM</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Avg Price (24 hours)</span>
+                    <span>{t("booking.avg-price-per-day")} (24 hours)</span>
                     <span>₹{car.ratePerHour * 24}</span>
                   </div>
                 </div>
@@ -272,7 +278,7 @@ function BookCar() {
                   {handleBookNow.isPending && (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   )}
-                  Book Now
+                  {t("booknow-button")}
                 </Button>
               </CardFooter>
             </Card>
