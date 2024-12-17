@@ -20,7 +20,7 @@ const app = new Hono()
     cors({
       origin: "*",
       allowHeaders: ["Authorization", "Content-Type"],
-      allowMethods: ["GET", "POST", "PUT", "DELETE"],
+      allowMethods: ['GET', 'HEAD', 'PUT', 'POST', 'DELETE', 'PATCH'],
     })
   )
   .use(logger())
