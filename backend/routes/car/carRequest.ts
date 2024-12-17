@@ -1,5 +1,5 @@
 import { vValidator } from "@hono/valibot-validator";
-import { and, desc, eq, gte, lte, or } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte, notInArray, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { jwt } from "hono/jwt";
 import { branchDbSchema } from "../../schema/branch";
@@ -7,7 +7,9 @@ import {
   carDbSchema,
   carRequestDbSchema,
   carRequestSchema,
+  getTransferableCarsSchema,
   updateCarRequestSchema,
+  type CarSchemaType,
 } from "../../schema/car";
 import { userDbSchema } from "../../schema/user";
 import { carRequestStatus, userTypes } from "../../utils/constants";
@@ -18,6 +20,51 @@ export const carRequest = new Hono()
     jwt({
       secret: process.env.JWT_SECRET!,
     })
+  )
+
+  .get(
+    "/cars.transferable.get",
+    vValidator("query", getTransferableCarsSchema),
+    async (c) => {
+      const user = c.get("jwtPayload");
+      const { from, to } = c.req.valid("query");
+
+      if (user.role !== userTypes.SUPER_ADMIN) {
+        return c.json({ error: "Unauthorized" });
+      }
+
+      const cars = await db
+        .select()
+        .from(carDbSchema)
+        .where(
+          notInArray(
+            carDbSchema.id,
+            db
+              .select({ id: carRequestDbSchema.car })
+              .from(carRequestDbSchema)
+              .where(
+                and(
+                  or(
+                    eq(carRequestDbSchema.status, carRequestStatus.APPROVED),
+                    eq(carRequestDbSchema.status, carRequestStatus.STARTED)
+                  ),
+                  or(
+                    and(
+                      gte(carRequestDbSchema.from, new Date(from)),
+                      lte(carRequestDbSchema.from, new Date(to))
+                    ),
+                    and(
+                      gte(carRequestDbSchema.to, new Date(from)),
+                      lte(carRequestDbSchema.to, new Date(to))
+                    )
+                  )
+                )
+              )
+          )
+        );
+
+      return c.json({ data: cars });
+    }
   )
 
   /**
@@ -52,7 +99,7 @@ export const carRequest = new Hono()
       return c.json({ error: "User not found" });
     }
 
-    //fetch if car with id exists or not
+    // fetch if car with id exists or not
     const carResponse = await db
       .select()
       .from(carDbSchema)
@@ -72,14 +119,19 @@ export const carRequest = new Hono()
       return c.json({ error: "Branch not found" });
     }
 
-    // Check for overlapping approved bookings
+    console.log(body)
+
+    // Check for overlapping approved or started bookings
     const overlappingRequests = await db
       .select()
       .from(carRequestDbSchema)
       .where(
         and(
           eq(carRequestDbSchema.car, body.car),
-          eq(carRequestDbSchema.status, carRequestStatus.APPROVED),
+          or(
+            eq(carRequestDbSchema.status, carRequestStatus.APPROVED),
+            eq(carRequestDbSchema.status, carRequestStatus.STARTED)
+          ),
           or(
             and(
               gte(carRequestDbSchema.from, new Date(body.from)),
@@ -88,6 +140,10 @@ export const carRequest = new Hono()
             and(
               gte(carRequestDbSchema.to, new Date(body.from)),
               lte(carRequestDbSchema.to, new Date(body.to))
+            ),
+            and(
+              lte(carRequestDbSchema.from, new Date(body.from)),
+              gte(carRequestDbSchema.to, new Date(body.to))
             )
           )
         )
@@ -247,6 +303,16 @@ export const carRequest = new Hono()
         return c.json({ error: "Unauthorized" });
       }
 
+      if (body.status === carRequestStatus.TRANSFERRED) {
+        if (user.role !== userTypes.SUPER_ADMIN) {
+          return c.json({ error: "Unauthorized" });
+        }
+
+        if (!body.newCarId) {
+          return c.json({ error: "New car id is required" });
+        }
+      }
+
       //fetch if car request with id exists or not
       const carRequestResponse = await db
         .select()
@@ -257,29 +323,40 @@ export const carRequest = new Hono()
         return c.json({ error: "Car request not found" });
       }
 
+      const carRequest = carRequestResponse[0];
+
+      let response: CarSchemaType[];
+
       // update car request
-      const response = await db
-        .update(carRequestDbSchema)
-        .set({ status: body.status, updatedAt: new Date() })
-        .where(eq(carRequestDbSchema.id, body.id))
-        .returning();
+      if (body.status === carRequestStatus.TRANSFERRED) {
+        // check if the car with id exists or not
+        response = await db.transaction(async (tx) => {
+          await tx.insert(carRequestDbSchema).values({
+            status: carRequestStatus.STARTED,
+            startTime: carRequest.startTime,
+            from: carRequest.from,
+            to: carRequest.to,
+            user: carRequest.user,
+            car: body.newCarId!,
+          });
+
+          return tx
+            .update(carRequestDbSchema)
+            .set({ status: body.status, updatedAt: new Date() })
+            .where(eq(carRequestDbSchema.id, body.id))
+            .returning();
+        });
+      } else {
+        response = await db
+          .update(carRequestDbSchema)
+          .set({ status: body.status, updatedAt: new Date() })
+          .where(eq(carRequestDbSchema.id, body.id))
+          .returning();
+      }
 
       if (response.length === 0) {
         return c.json({ error: "Car request not updated" });
       }
-
-      // If the request is approved, reject other pending requests for the same car
-      // if (body.status === carRequestStatus.APPROVED) {
-      // 	await db
-      // 		.update(carRequestDbSchema)
-      // 		.set({ status: carRequestStatus.REJECTED })
-      // 		.where(
-      // 			and(
-      // 				eq(carRequestDbSchema.car, carRequestResponse[0].car),
-      // 				eq(carRequestDbSchema.status, carRequestStatus.PENDING)
-      // 			)
-      // 		);
-      // }
 
       return c.json({ data: response[0] });
     }

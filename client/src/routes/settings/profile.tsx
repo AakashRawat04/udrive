@@ -198,7 +198,6 @@ function Profile() {
 
   async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    console.log(event.target.name);
     if (!file) return;
     await uploadFileMutation.mutateAsync({
       file,

@@ -28,7 +28,6 @@ function LoginForm() {
     try {
       await login(email, password);
     } catch (error) {
-      console.log(error);
       toast.error("An error occurred while logging in");
     }
   };

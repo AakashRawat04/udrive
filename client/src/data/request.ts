@@ -7,6 +7,7 @@ export const enum RequestStatus {
   Cancelled = "cancelled",
   Started = "started",
   Completed = "completed",
+  Transferred = "transferred",
 }
 
 export const carRequestSchema = z.object({
@@ -17,7 +18,15 @@ export const carRequestSchema = z.object({
   from: z.date(),
   to: z.date(),
   startTime: z.date().optional(),
-  status: z.enum(["pending", "approved", "rejected", "cancelled", "started", "completed"]),
+  status: z.enum([
+    "pending",
+    "approved",
+    "rejected",
+    "cancelled",
+    "started",
+    "completed",
+    "transferred",
+  ]),
   endTime: z.date().optional(),
   bill: z.number().optional(),
   createdAt: z.date().default(() => new Date()),

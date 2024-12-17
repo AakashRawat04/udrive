@@ -13,7 +13,7 @@ import { Car } from "@/data/car";
 import { branch } from "@/data/branch";
 
 export const CarCard = ({ car }: { car: Car }) => (
-  <Card className="w-full hover:shadow-lg transition-shadow duration-200 overflow-hidden">
+  <Card className="w-full hover:shadow transition-shadow duration-200 overflow-hidden">
     <CardHeader className="p-0">
       <Carousel
         className="w-full"

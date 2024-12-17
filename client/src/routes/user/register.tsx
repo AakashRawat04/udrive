@@ -82,7 +82,6 @@ function LoginForm() {
         to: "/user/login",
       });
     } catch (error) {
-      console.log(error);
       toast.error("An error occurred while registering");
     }
   };

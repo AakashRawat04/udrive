@@ -1,3 +1,4 @@
+import { AutoForm } from "@/components/ui/autoform";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,33 +7,49 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Drawer } from "vaul";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { addCarSchema, type Car } from "@/data/car";
-import { cn } from "@/lib/classes";
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { format } from "date-fns";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  ArrowRight,
-  CalendarIcon,
-  CarIcon,
-  Loader2Icon,
-  RefreshCcw,
-  Trash2,
-} from "lucide-react";
-import React, { useRef, useState } from "react";
-import { AutoForm } from "@/components/ui/autoform";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { type Branch } from "@/data/branch";
+import { addCarSchema, type Car } from "@/data/car";
+import { CarRequest, RequestStatus } from "@/data/request";
 import {
   editUserFormSchema,
   newUserFormSchema,
@@ -40,33 +57,51 @@ import {
   type NewUser,
   type User,
 } from "@/data/user";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { PopoverClose } from "@radix-ui/react-popover";
-import { type Branch } from "@/data/branch";
-import { useAuth } from "@/providers/AuthProvider";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type APIResponse } from "@/lib/api";
-import { toast } from "sonner";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { cn } from "@/lib/classes";
+import { toISODateWithLocalTimeZone, toTitleCase } from "@/lib/helpers";
+import { useAuth } from "@/providers/AuthProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { PopoverClose } from "@radix-ui/react-popover";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { format } from "date-fns";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
+  ArrowRight,
+  CalendarIcon,
+  CarIcon,
+  Check,
+  ChevronsUpDownIcon,
+  Loader2Icon,
+  RefreshCcw,
+  Trash2,
+} from "lucide-react";
 import { FetchError } from "ofetch";
-import { CarRequest, RequestStatus } from "@/data/request";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import React, { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { Drawer } from "vaul";
+import { z } from "zod";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
 });
+
+const carTransferSchema = z.object({
+  newCarId: z
+    .string({
+      required_error: "Please select a car",
+      invalid_type_error: "Please select a car",
+      message: "Please select a car",
+    })
+    .uuid({
+      message: "Please select a car",
+    }),
+});
+
+function getCarFomatted(car: Car) {
+  return `${car.regNo} - ${car.brand} ${car.model}`;
+}
 
 function Booking({
   booking,
@@ -77,6 +112,44 @@ function Booking({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogAction, setDialogAction] = useState<null | (() => void)>(null);
   const [completeRideDialogOpen, setCompleteRideDialogOpen] = useState(false);
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
+  const form = useForm<z.infer<typeof carTransferSchema>>({
+    resolver: zodResolver(carTransferSchema),
+    defaultValues: {
+      newCarId: "",
+    },
+  });
+
+  const onSubmit = form.handleSubmit(async (data) => {
+    await updateCarRequestMutation.mutateAsync({
+      status: RequestStatus.Transferred,
+      newCarId: data.newCarId,
+    });
+  });
+
+  const transferableCarsQuery = useQuery({
+    queryKey: ["transferableCars"],
+    queryFn: async () => {
+      const response = await api<APIResponse<Car[]>>("/cars.transferable.get", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        query: {
+          from: toISODateWithLocalTimeZone(new Date(car_request.from)),
+          to: toISODateWithLocalTimeZone(new Date(car_request.to)),
+        },
+      });
+
+      if (!response.data) {
+        throw new Error(response.error!);
+      }
+
+      return response.data;
+    },
+    enabled: isTransferDialogOpen,
+    refetchInterval: 10000,
+  });
+
   const router = useRouter();
 
   const queryClient = useQueryClient();
@@ -107,16 +180,27 @@ function Booking({
       toast.error(error.message ?? "An error occurred");
     },
     onSettled: () => {
-      queryClient.refetchQueries()
+      queryClient.refetchQueries();
     },
   });
 
   const updateCarRequestMutation = useMutation({
-    mutationFn: async (status: RequestStatus) => {
+    mutationFn: async ({
+      status,
+      newCarId,
+    }: {
+      status: RequestStatus;
+      newCarId?: string;
+    }) => {
+      if (status === RequestStatus.Transferred && !newCarId) {
+        throw new Error("Please provide a new car ID");
+      }
+
       const response = await api<APIResponse<string>>(`/car.request.update`, {
         body: {
           id: car_request.id,
           status,
+          newCarId,
         },
         method: "POST",
         headers: {
@@ -138,7 +222,12 @@ function Booking({
       toast.error(error.message ?? "An error occurred");
     },
     onSettled: () => {
-      queryClient.refetchQueries()
+      queryClient.refetchQueries();
+
+      if (isTransferDialogOpen) {
+        form.reset();
+        setIsTransferDialogOpen(false);
+      }
     },
   });
 
@@ -160,7 +249,9 @@ function Booking({
                 onClick={() => {
                   setDialogAction(
                     () => () =>
-                      updateCarRequestMutation.mutate(RequestStatus.Approved)
+                      updateCarRequestMutation.mutate({
+                        status: RequestStatus.Approved,
+                      })
                   );
                 }}
               >
@@ -174,7 +265,9 @@ function Booking({
                 onClick={() => {
                   setDialogAction(
                     () => () =>
-                      updateCarRequestMutation.mutate(RequestStatus.Rejected)
+                      updateCarRequestMutation.mutate({
+                        status: RequestStatus.Rejected,
+                      })
                   );
                 }}
               >
@@ -203,7 +296,9 @@ function Booking({
                 onClick={() => {
                   setDialogAction(
                     () => () =>
-                      updateCarRequestMutation.mutate(RequestStatus.Cancelled)
+                      updateCarRequestMutation.mutate({
+                        status: RequestStatus.Cancelled,
+                      })
                   );
                 }}
               >
@@ -214,10 +309,11 @@ function Booking({
         );
       case "cancelled":
       case "rejected":
+      case "transferred":
         return (
           // This booking has been cancelled
           <Button className="w-full" variant="secondary" disabled>
-            Cancelled
+            {toTitleCase(car_request.status)}
           </Button>
         );
       case "completed":
@@ -259,7 +355,7 @@ function Booking({
       toast.error(error.message ?? "An error occurred");
     },
     onSettled: () => {
-      queryClient.refetchQueries()
+      queryClient.refetchQueries();
     },
   });
 
@@ -333,7 +429,9 @@ function Booking({
               >
                 {/* @ts-ignore */}
                 {format(
-                  car_request.status === "completed" ? car_request.startTime! : car_request.from,
+                  car_request.status === "completed"
+                    ? new Date(car_request.startTime!)
+                    : new Date(car_request.from),
                   car_request.status === "completed" ? "hh:mm a, P" : "PPP"
                 )}
                 <CalendarIcon className="ml-auto h-4 w-4" />
@@ -354,7 +452,9 @@ function Booking({
               >
                 {/* @ts-ignore */}
                 {format(
-                  car_request.status === "completed" ? car_request.endTime! : car_request.from,
+                  car_request.status === "completed"
+                    ? new Date(car_request.endTime!)
+                    : new Date(car_request.to),
                   car_request.status === "completed" ? "hh:mm a, P" : "PPP"
                 )}
                 <CalendarIcon className="ml-auto h-4 w-4" />
@@ -446,6 +546,145 @@ function Booking({
               </DialogContent>
             </Dialog>
           </div>
+          {car_request.status === "started" && (
+            <div className="flex gap-2 justify-between">
+              <Dialog
+                open={isTransferDialogOpen}
+                onOpenChange={(isOpen) => {
+                  setIsTransferDialogOpen(isOpen);
+                  form.reset();
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button className="w-full bg-black text-white hover:bg-black/80">
+                    Transfer Booking
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogTitle>Transfer Booking</DialogTitle>
+                  <Form {...form}>
+                    <form onSubmit={onSubmit} className="space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="newCarId"
+                        render={({ field }) => {
+                          return (
+                            <FormItem className="flex flex-col">
+                              <FormLabel>
+                                Select the car you want to transfer the booking
+                                to
+                              </FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                      "w-full max-w-xs justify-between",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value
+                                      ? getCarFomatted(
+                                          transferableCarsQuery.data?.find(
+                                            (car) => car.id === field.value
+                                          )!
+                                        )
+                                      : "Select Car"}
+                                    <ChevronsUpDownIcon className="opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-full p-0"
+                                  align="start"
+                                >
+                                  <Command
+                                    filter={(value, search) => {
+                                      const car =
+                                        transferableCarsQuery.data?.find(
+                                          (car) => car.id === value
+                                        );
+
+                                      return Number(
+                                        car?.regNo
+                                          .toLowerCase()
+                                          .includes(search.toLowerCase()) ||
+                                          car?.brand
+                                            .toLowerCase()
+                                            .includes(search.toLowerCase()) ||
+                                          car?.model
+                                            .toLowerCase()
+                                            .includes(search.toLowerCase())
+                                      );
+                                    }}
+                                  >
+                                    <CommandInput
+                                      placeholder="Search for car..."
+                                      className="h-9"
+                                    />
+                                    <CommandList>
+                                      <CommandEmpty>
+                                        No cars available for transfer
+                                      </CommandEmpty>
+                                      <CommandGroup>
+                                        {transferableCarsQuery.data?.map(
+                                          (car) => (
+                                            <CommandItem
+                                              key={car.id}
+                                              value={car.id}
+                                              onSelect={(currentValue) => {
+                                                form.setValue(
+                                                  "newCarId",
+                                                  currentValue
+                                                );
+                                              }}
+                                            >
+                                              {getCarFomatted(car)}
+                                              <Check
+                                                className={cn(
+                                                  "ml-auto",
+                                                  field.value === car.id
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                                )}
+                                              />
+                                            </CommandItem>
+                                          )
+                                        )}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
+                      />
+                      <div className="flex gap-2 mt-4 float-right">
+                        <DialogClose
+                          asChild
+                          disabled={updateCarRequestMutation.isPending}
+                        >
+                          <Button variant="secondary">Cancel</Button>
+                        </DialogClose>
+                        <Button
+                          type="submit"
+                          variant="destructive"
+                          disabled={updateCarRequestMutation.isPending}
+                        >
+                          {updateCarRequestMutation.isPending && (
+                            <Loader2Icon className="animate-spin" />
+                          )}
+                          Transfer Booking
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -1137,7 +1376,6 @@ function CarForm({
   const branchNames = branches?.map((branch) => branch.branch.name) ?? [];
 
   if (car) {
-    console.log("gegre", car);
     const carBranch = branches?.find((data) => data.branch.id === branch?.id);
     if (carBranch) {
       car.branch = carBranch.branch.name;
@@ -1777,8 +2015,6 @@ function Dashboard() {
       if (!response.data) {
         throw new Error(response.error!);
       }
-
-      console.log(response.data);
 
       return response.data;
     },

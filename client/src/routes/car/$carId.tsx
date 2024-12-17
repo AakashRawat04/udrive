@@ -1,41 +1,40 @@
-import { APIProvider, Map } from "@vis.gl/react-google-maps";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
-  CardHeader,
   CardFooter,
+  CardHeader,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CogIcon, UsersIcon } from "lucide-react";
+import type { Branch } from "@/data/branch";
+import { Car } from "@/data/car";
+import { api, type APIResponse } from "@/lib/api";
+import { cn } from "@/lib/classes";
+import { toDateInQueryFormat, toISODateWithLocalTimeZone } from "@/lib/helpers";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { APIProvider, Map } from "@vis.gl/react-google-maps";
+import { format } from "date-fns";
 import {
   ArrowRight,
-  CalendarIcon,
-  DropletsIcon,
+  CalendarIcon, CogIcon, DropletsIcon,
   FuelIcon,
   GaugeIcon,
   Loader2,
-  MapPin,
+  MapPin, UsersIcon
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { Car } from "@/data/car";
-import { api, type APIResponse } from "@/lib/api";
-import type { Branch } from "@/data/branch";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { FetchError } from "ofetch";
-import { toast } from "sonner";
-import { cn } from "@/lib/classes";
-import { format } from "date-fns";
 import { useQueryState } from "nuqs";
+import { FetchError } from "ofetch";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/car/$carId")({
   component: BookCar,
@@ -46,17 +45,22 @@ function BookCar() {
   const { t } = useTranslation();
   const { carId } = Route.useParams();
   const [pickupDate, setPickupDate] = useQueryState<Date>("pickupDate", {
-    parse: (v) => new Date(v),
-    serialize: (v) => `${v.getFullYear()}-${v.getMonth() + 1}-${v.getDate()}`,
+    parse: (v) => new Date(`${v}T00:00:00+05:30`),
+    serialize: toDateInQueryFormat,
   });
   const [dropDate, setDropDate] = useQueryState<Date>("dropDate", {
-    parse: (v) => new Date(v),
-    serialize: (v) => `${v.getFullYear()}-${v.getMonth() + 1}-${v.getDate()}`,
+    parse: (v) => new Date(`${v}T23:59:59+05:30`),
+    serialize: toDateInQueryFormat,
   });
   const [zoom, setZoom] = useState(12);
   const [center, setCenter] = useState<
     google.maps.LatLng | google.maps.LatLngLiteral
   >({ lat: 22.5726, lng: 88.3639 });
+
+  useEffect(() => {
+    dropDate?.setHours(23, 59, 59, 999);
+    setDropDate(dropDate);
+  }, [dropDate, pickupDate]);
 
   const carDetails = useQuery({
     queryKey: ["car", carId],
@@ -81,6 +85,13 @@ function BookCar() {
 
   const handleBookNow = useMutation({
     mutationFn: async () => {
+      if (!pickupDate || !dropDate) {
+        throw new Error("Please select pickup and drop off date");
+      }
+
+      pickupDate.setHours(0, 0, 0, 0);
+      dropDate.setHours(23, 59, 59, 999);
+
       const response = await api(`/car.request`, {
         method: "POST",
         headers: {
@@ -88,8 +99,8 @@ function BookCar() {
         },
         body: JSON.stringify({
           car: carId,
-          from: `${pickupDate?.getFullYear()}-${pickupDate?.getMonth()}-${pickupDate?.getDate().toString().padStart(2, "0")}`,
-          to: `${dropDate?.getFullYear()}-${dropDate?.getMonth()}-${dropDate?.getDate().toString().padStart(2, "0")}`,
+          from: toISODateWithLocalTimeZone(pickupDate),
+          to: toISODateWithLocalTimeZone(dropDate),
         }),
       });
 

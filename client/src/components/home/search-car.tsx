@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Popover,
   PopoverContent,
@@ -32,16 +32,17 @@ import type { Branch } from "@/data/branch";
 import type { User } from "@/data/user";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { toDateInQueryFormat } from "@/lib/helpers";
 
 export const SearchForm: React.FC = () => {
   const [location, setLocation] = useQueryState("location");
   const [pickupDate, setPickupDate] = useQueryState<Date>("pickupDate", {
-    parse: (v) => new Date(v),
-    serialize: (v) => `${v.getFullYear()}-${v.getMonth() + 1}-${v.getDate()}`,
+    parse: (v) => new Date(`${v}T00:00:00+05:30`),
+    serialize: toDateInQueryFormat,
   });
   const [dropDate, setDropDate] = useQueryState<Date>("dropDate", {
-    parse: (v) => new Date(v),
-    serialize: (v) => `${v.getFullYear()}-${v.getMonth() + 1}-${v.getDate()}`,
+    parse: (v) => new Date(`${v}T23:59:59+05:30`),
+    serialize: toDateInQueryFormat,
   });
   const today = new Date();
   const { t } = useTranslation();
@@ -69,6 +70,11 @@ export const SearchForm: React.FC = () => {
       return branches.data;
     },
   });
+
+  useEffect(() => {
+    dropDate?.setHours(23, 59, 59, 999);
+    setDropDate(dropDate);
+  }, [dropDate, pickupDate]);
 
   const canSubmit = location && pickupDate && dropDate;
 
@@ -229,8 +235,8 @@ export const SearchForm: React.FC = () => {
               to="/search"
               search={{
                 location,
-                pickupDate: `${pickupDate?.getFullYear()}-${(pickupDate?.getMonth() ?? 0) + 1}-${pickupDate?.getDate()}`,
-                dropDate: `${dropDate?.getFullYear()}-${(dropDate?.getMonth() ?? 0) + 1}-${dropDate?.getDate()}`,
+                pickupDate: toDateInQueryFormat(pickupDate ?? today),
+                dropDate: toDateInQueryFormat(dropDate ?? today),
               }}
             >
               <SearchIcon className="h-4 w-4" />

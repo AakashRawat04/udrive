@@ -9,6 +9,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQueryState } from "nuqs";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { toDateInQueryFormat } from "@/lib/helpers";
 
 export const Route = createFileRoute("/search")({
   component: SearchPage,
@@ -17,12 +18,12 @@ export const Route = createFileRoute("/search")({
 function SearchPage() {
   const [location] = useQueryState("location");
   const [pickupDate] = useQueryState<Date>("pickupDate", {
-    parse: (v) => new Date(v),
-    serialize: (v) => `${v.getFullYear()}-${v.getMonth() + 1}-${v.getDate()}`,
+    parse: (v) => new Date(`${v}T00:00:00+05:30`),
+    serialize: toDateInQueryFormat,
   });
   const [dropDate] = useQueryState<Date>("dropDate", {
-    parse: (v) => new Date(v),
-    serialize: (v) => `${v.getFullYear()}-${v.getMonth() + 1}-${v.getDate()}`,
+    parse: (v) => new Date(`${v}T23:59:59+05:30`),
+    serialize: toDateInQueryFormat,
   });
   const carSearch = useQuery({
     queryKey: ["cars"],

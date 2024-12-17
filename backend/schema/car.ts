@@ -12,6 +12,7 @@ import * as v from "valibot";
 import { carRequestStatus } from "../utils/constants";
 import { branchDbSchema } from "./branch";
 import { userDbSchema } from "./user";
+import { createSelectSchema } from "drizzle-valibot";
 
 export const carDbSchema = pgTable("car", {
   id: uuid("id").notNull().primaryKey().defaultRandom(),
@@ -82,6 +83,9 @@ export const carRequestDbSchema = pgTable("car_request", {
     .defaultNow(),
 });
 
+export const carSchemaType = createSelectSchema(carRequestDbSchema);
+export type CarSchemaType = v.InferInput<typeof carSchemaType>;
+
 export const carSchema = v.object({
   brand: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
   model: v.pipe(v.string(), v.minLength(1), v.maxLength(255)),
@@ -113,13 +117,14 @@ export const assignCarSchema = v.object({
 
 export const carRequestSchema = v.object({
   car: v.pipe(v.string(), v.uuid()),
-  from: v.pipe(v.string(), v.isoDate()),
-  to: v.pipe(v.string(), v.isoDate()),
+  from: v.pipe(v.string(), v.isoTimestamp()),
+  to: v.pipe(v.string(), v.isoTimestamp()),
 });
 
 export const updateCarRequestSchema = v.object({
   id: v.pipe(v.string(), v.uuid()),
   status: v.pipe(v.string(), v.picklist(Object.values(carRequestStatus))),
+  newCarId: v.optional(v.pipe(v.string(), v.uuid())),
 });
 
 export const startCarJourneySchema = v.object({
@@ -142,4 +147,9 @@ export const updateCarJourneySchema = v.object({
   startTime: v.optional(v.pipe(v.string(), v.isoDate())),
   endTime: v.optional(v.pipe(v.string(), v.isoDate())),
   finalPrice: v.optional(v.string()),
+});
+
+export const getTransferableCarsSchema = v.object({
+  from: v.pipe(v.string(), v.isoTimestamp()),
+  to: v.pipe(v.string(), v.isoTimestamp()),
 });

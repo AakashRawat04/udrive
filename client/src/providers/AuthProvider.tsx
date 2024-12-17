@@ -75,7 +75,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.success("Logged in successfully");
       window.location.reload();
     } catch (error) {
-      console.log(error);
       setUser(null);
       toast.error(error instanceof Error ? error.message : "Failed to log in");
     }

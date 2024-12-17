@@ -16,4 +16,5 @@ export const carRequestStatus = {
   CANCELLED: "cancelled",
   STARTED: "started",
   COMPLETED: "completed",
+  TRANSFERRED: "transferred",
 };
