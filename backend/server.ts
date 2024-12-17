@@ -16,7 +16,9 @@ const api = new Hono()
   .route("/", carJourney)
 
 const app = new Hono()
-  .use(cors())
+  .use(cors({
+    origin: "*",
+  }))
   .use(logger())
   .get("/healthcheck", () => {
     return new Response(null, { status: 200 });
