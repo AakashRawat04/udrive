@@ -111,16 +111,16 @@ function Booking({
         queryKey: ["bookingRequests"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["completedRequests"],
+        queryKey: ["completedBookings"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["cancelledRequests"],
+        queryKey: ["cancelledBookings"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["upcomingRequests"],
+        queryKey: ["upcommingBookings"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["ongoingRequests"],
+        queryKey: ["ongoingBookings"],
       });
     },
   });
@@ -156,16 +156,16 @@ function Booking({
         queryKey: ["bookingRequests"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["completedRequests"],
+        queryKey: ["completedBookings"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["cancelledRequests"],
+        queryKey: ["cancelledBookings"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["upcomingRequests"],
+        queryKey: ["upcommingBookings"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["ongoingRequests"],
+        queryKey: ["ongoingBookings"],
       });
     },
   });
@@ -291,16 +291,16 @@ function Booking({
         queryKey: ["bookingRequests"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["completedRequests"],
+        queryKey: ["completedBookings"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["cancelledRequests"],
+        queryKey: ["cancelledBookings"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["upcomingRequests"],
+        queryKey: ["upcommingBookings"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["ongoingRequests"],
+        queryKey: ["ongoingBookings"],
       });
     },
   });
