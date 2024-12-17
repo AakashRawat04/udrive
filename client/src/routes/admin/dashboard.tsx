@@ -107,21 +107,7 @@ function Booking({
       toast.error(error.message ?? "An error occurred");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["bookingRequests"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["completedBookings"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["cancelledBookings"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["upcommingBookings"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["ongoingBookings"],
-      });
+      queryClient.refetchQueries()
     },
   });
 
@@ -152,21 +138,7 @@ function Booking({
       toast.error(error.message ?? "An error occurred");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["bookingRequests"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["completedBookings"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["cancelledBookings"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["upcommingBookings"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["ongoingBookings"],
-      });
+      queryClient.refetchQueries()
     },
   });
 
@@ -287,21 +259,7 @@ function Booking({
       toast.error(error.message ?? "An error occurred");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["bookingRequests"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["completedBookings"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["cancelledBookings"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["upcommingBookings"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["ongoingBookings"],
-      });
+      queryClient.refetchQueries()
     },
   });
 

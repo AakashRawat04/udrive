@@ -53,6 +53,10 @@ function BookCar() {
     parse: (v) => new Date(v),
     serialize: (v) => `${v.getFullYear()}-${v.getMonth() + 1}-${v.getDate()}`,
   });
+  const [zoom, setZoom] = useState(12);
+  const [center, setCenter] = useState<
+    google.maps.LatLng | google.maps.LatLngLiteral
+  >({ lat: 22.5726, lng: 88.3639 });
 
   const carDetails = useQuery({
     queryKey: ["car", carId],
@@ -297,12 +301,17 @@ function BookCar() {
                 <APIProvider apiKey={import.meta.env.VITE_MAPS_API}>
                   <Map
                     gestureHandling="cooperative"
-                    zoom={12}
-                    center={{
-                      lat: 22.5726,
-                      lng: 88.3639,
+                    zoom={zoom}
+                    center={center}
+                    streetViewControl={false}
+                    fullscreenControl={false}
+                    onZoomChanged={(ev) => {
+                      setZoom(ev.detail.zoom);
                     }}
-                    className="w-full aspect-square"
+                    onCenterChanged={(ev) => {
+                      setCenter(ev.detail.center);
+                    }}
+                    className="w-full aspect-square [&>div]:rounded-lg border rounded-lg"
                   />
                 </APIProvider>
               </div>
