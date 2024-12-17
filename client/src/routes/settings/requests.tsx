@@ -74,14 +74,25 @@ function Requests() {
           </Link>
         </nav>
         <div className="grid gap-4">
-          {carRequests?.map(({ car_request, car, branch }) => (
-            <CarRequestCard
-              key={car_request.id}
-              carRequest={car_request}
-              car={car}
-              branch={branch}
-            />
-          ))}
+          {!carRequests?.length ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+                <p className="mb-2 text-lg font-semibold">No requests found</p>
+                <p className="text-sm text-muted-foreground">
+                  You haven't made any car rental requests yet.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            carRequests.map(({ car_request, car, branch }) => (
+              <CarRequestCard
+                key={car_request.id}
+                carRequest={car_request}
+                car={car}
+                branch={branch}
+              />
+            ))
+          )}
         </div>
       </div>
     </main>
