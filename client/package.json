@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "dev": "vite --port=3001",
+    "dev": "dotenvx run -- vite --port=4173",
     "build": "vite build",
-    "serve": "dotenvx run -- vite preview",
+    "serve": "dotenvx run -- vite preview --port=4173",
     "start": "vite"
   },
   "devDependencies": {
