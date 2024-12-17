@@ -65,7 +65,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { format, intervalToDuration } from "date-fns";
 import {
   ArrowRight,
   CalendarIcon,
@@ -103,12 +103,23 @@ function getCarFomatted(car: Car) {
   return `${car.regNo} - ${car.brand} ${car.model}`;
 }
 
+const billSchema = z.object({
+  hours: z.number().nonnegative(),
+  distance: z.number().nonnegative(),
+  extraCharges: z.number().min(0).optional(),
+  extraChargesReason: z.string().optional(),
+  discount: z.number().min(0).optional(),
+});
+
+type BillValues = z.infer<typeof billSchema>;
+
 function Booking({
   booking,
 }: {
   booking: { user: User; car: Car; car_request: CarRequest };
 }) {
   const { user, car, car_request } = booking;
+  const { user: loggedInUser } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogAction, setDialogAction] = useState<null | (() => void)>(null);
   const [completeRideDialogOpen, setCompleteRideDialogOpen] = useState(false);
@@ -359,12 +370,41 @@ function Booking({
     },
   });
 
-  const handleRideCompletion = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const bill = Number(formData.get("bill"));
+  const duration = intervalToDuration({
+    start: new Date(car_request.startTime!),
+    end: new Date(),
+  });
 
-    await rideCompletionMutation.mutateAsync(bill);
+  const hours = Number(
+    ((duration.hours ?? 0) + (duration.minutes ?? 0) / 60).toFixed(2)
+  );
+
+  const billForm = useForm<BillValues>({
+    resolver: zodResolver(billSchema),
+    defaultValues: {
+      hours,
+      distance: 0,
+      extraCharges: 0,
+      discount: 0,
+      extraChargesReason: "",
+    },
+  });
+
+  const distance = billForm.watch("distance", 0);
+  const subtotal =
+    hours * car.ratePerHour + (distance > 200 ? distance - 200 : 0) * 10;
+  const total = subtotal + (billForm.watch("discount") ?? 0);
+
+  const handleRideCompletion = async (data: BillValues) => {
+    if ((data.extraCharges ?? 0) > 0 && !data.extraChargesReason) {
+      toast.error("Please provide a reason for extra charges");
+      return;
+    }
+
+    const subtotal = data.hours * car.ratePerHour;
+    const total = subtotal + (data.extraCharges ?? 0) - (data.discount ?? 0);
+
+    await rideCompletionMutation.mutateAsync(total);
     setCompleteRideDialogOpen(false);
   };
 
@@ -466,45 +506,170 @@ function Booking({
               <>
                 <Dialog
                   open={completeRideDialogOpen}
-                  onOpenChange={setCompleteRideDialogOpen}
+                  onOpenChange={(isOpen) => {
+                    setCompleteRideDialogOpen(isOpen);
+                    billForm.reset();
+                  }}
                 >
                   <DialogTrigger asChild>
                     <Button variant="destructive" className="w-full">
                       End Ride
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="p-6 bg-white rounded-lg shadow-lg gap-0">
-                    <h2 className="text-lg font-semibold mb-4">Billing</h2>
-                    <p className="text-gray-600 mb-1">
-                      Please enter the bill amount for this ride
-                    </p>
-                    <form
-                      className="flex flex-col gap-4"
-                      onSubmit={handleRideCompletion}
-                    >
-                      <Input
-                        type="number"
-                        name="bill"
-                        placeholder="Enter bill amount"
-                        className="rounded-xl h-auto focus-visible:ring-0 outline-none p-2 text-5xl md:text-5xl font-bold shadow-none border-x-0 border-t-0 border-b remove-spin"
-                        min={0}
-                        required
-                      />
-                      <div className="flex gap-4 justify-end">
-                        <Button
-                          variant="secondary"
-                          onClick={() => setCompleteRideDialogOpen(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          className="bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-800"
-                          type="submit"
-                        >
-                          Confirm
-                        </Button>
-                      </div>
-                    </form>
+                  <DialogContent className="p-6 bg-white rounded-lg shadow-lg gap-0 max-w-xl w-full">
+                    <DialogTitle>Ride Summary</DialogTitle>
+                    <Form {...billForm}>
+                      <form
+                        onSubmit={billForm.handleSubmit(handleRideCompletion)}
+                        className="space-y-4 mt-4"
+                      >
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={billForm.control}
+                            name="hours"
+                            disabled
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Hours Driven</FormLabel>
+                                <Input
+                                  disabled
+                                  value={`${duration.hours ?? 0} hours ${duration.minutes ?? 0} minutes`}
+                                />
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={billForm.control}
+                            name="distance"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Distance (km)</FormLabel>
+                                <FormControl>
+                                  <Input type="number" {...field} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="py-2 border-t">
+                          <div className="flex justify-between">
+                            <span>Free Travel (200 km)</span>
+                            <span>
+                              Delta: {distance > 200 ? distance - 200 : 0} km
+                            </span>
+                          </div>
+                          <div className="flex justify-between mt-2">
+                            <span>Distance Total (₹10/km)</span>
+                            <span>
+                              ₹{distance > 200 ? (distance - 200) * 10 : 0}
+                            </span>
+                          </div>
+                          <div className="flex justify-between mt-2">
+                            <span>
+                              Subtotal ({hours.toFixed(2)}
+                              <span className="text-muted-foreground text-xs">
+                                hrs
+                              </span>{" "}
+                              × ₹{car.ratePerHour}
+                              <span className="text-muted-foreground text-xs">
+                                /hr
+                              </span>
+                              )
+                            </span>
+                            <span>₹{subtotal.toFixed(2)}</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <FormField
+                            control={billForm.control}
+                            name="extraCharges"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Extra Charges</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    {...field}
+                                    onChange={(e) =>
+                                      field.onChange(Number(e.target.value))
+                                    }
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+
+                          {(billForm.watch("extraCharges") ?? 0) > 0 && (
+                            <FormField
+                              control={billForm.control}
+                              name="extraChargesReason"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    Reason for Extra Charges
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      placeholder="Enter reason"
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                        </div>
+
+                        {loggedInUser?.role === "super_admin" && (
+                          <FormField
+                            control={billForm.control}
+                            name="discount"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Discount</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    {...field}
+                                    onChange={(e) =>
+                                      field.onChange(Number(e.target.value))
+                                    }
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        )}
+
+                        <div className="py-4 border-t border-b">
+                          <div className="flex justify-between text-lg font-semibold">
+                            <span>Total Amount</span>
+                            <span>₹{total}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-4 justify-end">
+                          <Button
+                            variant="secondary"
+                            onClick={() => setCompleteRideDialogOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type="submit" variant="default">
+                            {rideCompletionMutation.isPending && (
+                              <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                            )}
+                            Complete Ride
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
                   </DialogContent>
                 </Dialog>
                 <Button
