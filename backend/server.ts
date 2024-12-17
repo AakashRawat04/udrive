@@ -13,12 +13,16 @@ const api = new Hono()
   .route("/", branch)
   .route("/", car)
   .route("/", carRequest)
-  .route("/", carJourney)
+  .route("/", carJourney);
 
 const app = new Hono()
-  .use(cors({
-    origin: "*",
-  }))
+  .use(
+    cors({
+      origin: "*",
+      allowHeaders: ["Authorization", "Content-Type"],
+      allowMethods: ["GET", "POST", "PUT", "DELETE"],
+    })
+  )
   .use(logger())
   .get("/healthcheck", () => {
     return new Response(null, { status: 200 });
